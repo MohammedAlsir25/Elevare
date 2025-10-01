@@ -1,0 +1,5 @@
+{
+  "name": "Elevare",
+  "description": "A responsive dashboard for Elevare, a concept application merging personal finance and ERP features. It includes data visualization, transaction tracking, and an AI-powered financial assistant.",
+  "requestFramePermissions": []
+}

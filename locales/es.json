@@ -1,0 +1,40 @@
+{
+  "sidebar": {
+    "dashboard": "Tablero",
+    "analytics": "Analíticas",
+    "transactions": "Transacciones",
+    "wallets": "Billeteras",
+    "budgets": "Presupuestos",
+    "contacts": "Contactos",
+    "sales": "Ventas",
+    "accounting": "Contabilidad",
+    "inventory": "Inventario",
+    "hr": "RRHH",
+    "reports": "Informes",
+    "admin": "Administración",
+    "settings": "Ajustes",
+    "logout": "Cerrar Sesión"
+  },
+  "dashboard": {
+    "title": "Bienvenido a WiseERP",
+    "subtitle": "Su panel integrado de finanzas y negocios.",
+    "customize": "Personalizar"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "subtitle": "Administre el perfil de su empresa y la configuración de la aplicación.",
+    "appearance": "Apariencia",
+    "theme": "Tema",
+    "language": "Idioma",
+    "light": "Claro",
+    "dark": "Oscuro"
+  },
+  "login": {
+    "title": "WiseERP",
+    "subtitle": "Inicie sesión para acceder a su panel",
+    "loginAs": "Iniciar sesión como",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "loginButton": "Iniciar Sesión"
+  }
+}
