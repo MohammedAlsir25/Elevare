@@ -291,10 +291,10 @@ export const COMPANIES: Company[] = [
 ];
 
 export const ADMIN_USERS: AdminUser[] = [
-    { id: 'user1', name: 'Admin User', email: 'admin@wiseerp.com', role: UserRole.ADMIN, lastLogin: '2024-07-26', companyId: 'comp1' },
-    { id: 'user2', name: 'Accountant User', email: 'accountant@wiseerp.com', role: UserRole.ACCOUNTANT, lastLogin: '2024-07-25', companyId: 'comp1' },
-    { id: 'user3', name: 'Employee User', email: 'employee@wiseerp.com', role: UserRole.EMPLOYEE, lastLogin: '2024-07-26', companyId: 'comp2' },
-    { id: 'user4', name: 'HR Manager User', email: 'hr@wiseerp.com', role: UserRole.HR_MANAGER, lastLogin: '2024-07-26', companyId: 'comp1' },
+    { id: 'user1', name: 'Admin User', email: 'admin@elevare.com', role: UserRole.ADMIN, lastLogin: '2024-07-26', companyId: 'comp1' },
+    { id: 'user2', name: 'Accountant User', email: 'accountant@elevare.com', role: UserRole.ACCOUNTANT, lastLogin: '2024-07-25', companyId: 'comp1' },
+    { id: 'user3', name: 'Employee User', email: 'employee@elevare.com', role: UserRole.EMPLOYEE, lastLogin: '2024-07-26', companyId: 'comp2' },
+    { id: 'user4', name: 'HR Manager User', email: 'hr@elevare.com', role: UserRole.HR_MANAGER, lastLogin: '2024-07-26', companyId: 'comp1' },
 ];
 
 export const SIDEBAR_LINKS = [

@@ -7,13 +7,18 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import db from './db.ts';
+import authRoutes from './routes/authRoutes.ts';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(cors()); // Allow requests from our frontend
-app.use(express.json()); // Allow the server to understand JSON data
+// FIX: Cast express.json() to any to resolve 'No overload matches this call' error. This appears to be caused by a type definition issue in the environment.
+app.use(express.json() as any); // Allow the server to understand JSON data
+
+// Routes
+app.use('/api/auth', authRoutes);
 
 // A simple test route that also checks DB connection
 app.get('/api/health', async (req, res) => {

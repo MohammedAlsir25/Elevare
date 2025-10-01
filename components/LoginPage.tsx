@@ -4,7 +4,7 @@ import { UserRole } from '../types.ts';
 import { useI18n } from '../contexts/I18nContext.tsx';
 
 const LoginPage: React.FC = () => {
-    const [email, setEmail] = useState('admin@wiseerp.com');
+    const [email, setEmail] = useState('admin@elevare.com');
     const [password, setPassword] = useState('password');
     const [role, setRole] = useState<UserRole>(UserRole.ADMIN);
     const { login } = useAuth();
