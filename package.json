@@ -16,7 +16,9 @@
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "express": "^5.1.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "pg": "^8.16.3",
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
