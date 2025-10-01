@@ -31,7 +31,7 @@ interface SettingsContextType {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-const SETTINGS_STORAGE_KEY = 'wiseerp-settings-v3';
+const SETTINGS_STORAGE_KEY = 'elevare-settings-v3';
 
 const initialSettings: AppSettings = {
     company: { name: 'Your Company', address: '123 Main St, Anytown, USA', logo: null },

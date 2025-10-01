@@ -10,7 +10,7 @@ interface CompanyContextType {
 
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
-const COMPANY_STORAGE_KEY = 'wiseerp-company-id';
+const COMPANY_STORAGE_KEY = 'elevare-company-id';
 
 export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [companies, setCompanies] = useState<Company[]>([]);

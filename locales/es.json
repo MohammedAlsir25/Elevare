@@ -16,7 +16,7 @@
     "logout": "Cerrar Sesión"
   },
   "dashboard": {
-    "title": "Bienvenido a WiseERP",
+    "title": "Bienvenido a Elevare",
     "subtitle": "Su panel integrado de finanzas y negocios.",
     "customize": "Personalizar"
   },
@@ -30,7 +30,7 @@
     "dark": "Oscuro"
   },
   "login": {
-    "title": "WiseERP",
+    "title": "Elevare",
     "subtitle": "Inicie sesión para acceder a su panel",
     "loginAs": "Iniciar sesión como",
     "email": "Correo electrónico",

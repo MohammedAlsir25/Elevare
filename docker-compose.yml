@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:14-alpine
+    container_name: elevare-db
+    restart: always
+    environment:
+      POSTGRES_USER: elevare_user
+      POSTGRES_PASSWORD: your_strong_password # Change this to a secure password!
+      POSTGRES_DB: elevare_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

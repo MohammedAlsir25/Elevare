@@ -16,7 +16,7 @@
     "logout": "Logout"
   },
   "dashboard": {
-    "title": "Welcome to WiseERP",
+    "title": "Welcome to Elevare",
     "subtitle": "Your integrated finance and business dashboard.",
     "customize": "Customize"
   },
@@ -30,7 +30,7 @@
     "dark": "Dark"
   },
   "login": {
-    "title": "WiseERP",
+    "title": "Elevare",
     "subtitle": "Sign in to access your dashboard",
     "loginAs": "Login as",
     "email": "Email",

@@ -7,7 +7,7 @@ import { useCompany } from '../contexts/CompanyContext.tsx';
 const AIAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 'initial-message', role: 'model', text: 'Hello! I am your WiseERP financial assistant. Ask me a question about your data, like "What was my biggest expense this month?".' }
+    { id: 'initial-message', role: 'model', text: 'Hello! I am your Elevare financial assistant. Ask me a question about your data, like "What was my biggest expense this month?".' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);

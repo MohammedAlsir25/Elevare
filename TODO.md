@@ -1,6 +1,6 @@
-# WiseERP Development Roadmap
+# Elevare Development Roadmap
 
-This document outlines the remaining tasks to complete the WiseERP application based on the project specification. We will work through these items step-by-step.
+This document outlines the remaining tasks to complete the Elevare application based on the project specification. We will work through these items step-by-step.
 
 ## Functional Requirements To-Do
 

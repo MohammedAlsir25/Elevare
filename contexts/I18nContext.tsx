@@ -17,7 +17,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [translations, setTranslations] = useState<Record<string, any>>({});
 
     useEffect(() => {
-        const savedLang = localStorage.getItem('wiseerp-language');
+        const savedLang = localStorage.getItem('elevare-language');
         const browserLang = navigator.language.split('-')[0];
         const initialLang = savedLang || (availableLanguages.includes(browserLang) ? browserLang : 'en');
         setLanguage(initialLang);
@@ -32,7 +32,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 }
                 const data = await response.json();
                 setTranslations(data);
-                localStorage.setItem('wiseerp-language', language);
+                localStorage.setItem('elevare-language', language);
             } catch (error) {
                 console.error("Failed to fetch translations:", error);
                 // Fallback to English if the selected language file fails
