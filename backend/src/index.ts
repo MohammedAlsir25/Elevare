@@ -3,9 +3,9 @@ import dotenv from 'dotenv';
 // This MUST be at the top, before any other imports that need process.env
 dotenv.config();
 
-// FIX: Changed es6-style imports to require to fix type resolution issues with commonjs modules like express and cors.
-import express = require('express');
-import cors = require('cors');
+// FIX: Changed require to ES6-style imports to fix module format errors.
+import express from 'express';
+import cors from 'cors';
 import db from './db.ts';
 
 const app = express();
