@@ -14,7 +14,8 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
     console.error('Unexpected error on idle client', err);
-    process.exit(-1);
+    // FIX: Cast `process` to `any` to resolve 'Property 'exit' does not exist on type 'Process'' error. This is a workaround for a likely type definition issue in the environment where the standard Node.js `process.exit` method is not recognized.
+    (process as any).exit(-1);
 });
 
 // Export a query method so the rest of the application doesn't need to interact with the pool directly

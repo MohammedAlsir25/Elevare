@@ -6,8 +6,8 @@ dotenv.config();
 // FIX: Changed require to ES6-style imports to fix module format errors.
 import express from 'express';
 import cors from 'cors';
-import db from './db.ts';
-import authRoutes from './routes/authRoutes.ts';
+import db from './db';
+import authRoutes from './routes/authRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 4000;

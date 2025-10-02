@@ -2,9 +2,9 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../db.ts';
+import db from '../db';
 // FIX: Corrected import path for shared types file.
-import { UserRole } from '../../../types.ts';
+import { UserRole } from '../../../types';
 
 // We need a user type for the database query result
 interface DbUser {
