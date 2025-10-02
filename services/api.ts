@@ -1,7 +1,27 @@
 import { COMPANIES, CATEGORIES } from '../constants.tsx';
 // FIX: Import 'Company' type.
-import { Wallet, Transaction, Contact, Invoice, Budget, FinancialGoal, Category, TransactionType, Employee, TimesheetEntry, ExpenseClaim, ExpenseClaimStatus, Account, JournalEntry, Product, PurchaseOrder, PurchaseOrderStatus, RecurringTransaction, Company, AdminUser } from '../types.ts';
+import { Wallet, Transaction, Contact, Invoice, Budget, FinancialGoal, Category, TransactionType, Employee, TimesheetEntry, ExpenseClaim, ExpenseClaimStatus, Account, JournalEntry, Product, PurchaseOrder, PurchaseOrderStatus, RecurringTransaction, Company, AdminUser, User } from '../types.ts';
 import { WALLETS, TRANSACTIONS, CONTACTS, INVOICES, BUDGETS, GOALS, EMPLOYEES, ACCOUNTS, PRODUCTS, JOURNAL_ENTRIES, PURCHASE_ORDERS, TIMESHEETS, EXPENSE_CLAIMS, RECURRING_TRANSACTIONS, ADMIN_USERS } from '../constants.tsx';
+
+const API_BASE_URL = 'http://localhost:4000/api';
+
+// --- REAL AUTH API ---
+export const login = async (email: string, pass: string): Promise<{ token: string, user: User }> => {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass }),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
+    }
+    
+    const data = await response.json();
+    return data;
+};
+
 
 // Simulate realistic network delay
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
