@@ -5,24 +5,25 @@ import PurchaseOrderModal from './PurchaseOrderModal.tsx';
 import { usePermissions } from '../hooks/usePermissions.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { useNotification } from '../contexts/NotificationContext.tsx';
+import { useConfirmation } from '../contexts/ConfirmationContext.tsx';
 import { usePagination } from '../hooks/usePagination.ts';
 import Pagination from './Pagination.tsx';
 import { EditIcon, DeleteIcon, ChevronUpDownIcon, ChevronUpIcon, ChevronDownIcon } from '../constants.tsx';
 import { useSortableData } from '../hooks/useSortableData.ts';
 import { PageWithTableSkeleton } from './Skeletons.tsx';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
+import { useDebounce } from '../hooks/useDebounce.ts';
 
 type Tab = 'products' | 'purchase-orders';
 
 // --- Product Content Component ---
 const ProductContent: React.FC<{
     products: Product[];
-    searchTerm: string;
     permissions: ReturnType<typeof usePermissions>;
     onEdit: (product: Product) => void;
     onDelete: (id: string) => void;
-}> = ({ products, searchTerm, permissions, onEdit, onDelete }) => {
-    const filteredProducts = useMemo(() => products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku.toLowerCase().includes(searchTerm.toLowerCase())), [products, searchTerm]);
-    const { items: sortedProducts, requestSort, sortConfig } = useSortableData(filteredProducts);
+}> = ({ products, permissions, onEdit, onDelete }) => {
+    const { items: sortedProducts, requestSort, sortConfig } = useSortableData(products);
     const { currentPageData: paginatedProducts, currentPage: productCurrentPage, totalPages: productTotalPages, goToPage: productGoToPage } = usePagination(sortedProducts, 10);
     
     const getSortIndicator = (key: string) => {
@@ -61,7 +62,7 @@ const ProductContent: React.FC<{
                                 )}
                             </tr>
                         ))}
-                        {filteredProducts.length === 0 && (
+                        {products.length === 0 && (
                             <tr>
                                 <td colSpan={permissions.canEditInventory ? 6 : 5} className="text-center py-8 text-gray-500 dark:text-gray-400">
                                     No products found.
@@ -71,7 +72,7 @@ const ProductContent: React.FC<{
                     </tbody>
                 </table>
             </div>
-            {filteredProducts.length > 0 && (
+            {products.length > 0 && (
                 <Pagination currentPage={productCurrentPage} totalPages={productTotalPages} onPageChange={productGoToPage} />
             )}
         </div>
@@ -82,16 +83,15 @@ const ProductContent: React.FC<{
 const PurchaseOrderContent: React.FC<{
     purchaseOrders: PurchaseOrder[];
     contacts: Contact[];
-    searchTerm: string;
     permissions: ReturnType<typeof usePermissions>;
     onEdit: (po: PurchaseOrder) => void;
     onDelete: (id: string) => void;
     onReceive: (id: string) => void;
-}> = ({ purchaseOrders, contacts, searchTerm, permissions, onEdit, onDelete, onReceive }) => {
+}> = ({ purchaseOrders, contacts, permissions, onEdit, onDelete, onReceive }) => {
     const getSupplierName = (id: string) => contacts.find(c => c.id === id)?.name || 'Unknown';
-    const filteredPOs = useMemo(() => purchaseOrders.filter(po => po.poNumber.toLowerCase().includes(searchTerm.toLowerCase())), [purchaseOrders, searchTerm]);
-    const { items: sortedPOs, requestSort, sortConfig } = useSortableData(filteredPOs);
+    const { items: sortedPOs, requestSort, sortConfig } = useSortableData(purchaseOrders);
     const { currentPageData: paginatedPOs, currentPage: poCurrentPage, totalPages: poTotalPages, goToPage: poGoToPage } = usePagination(sortedPOs, 10);
+    const formatDate = useLocalizedDate();
     
     const statusColors: Record<PurchaseOrderStatus, string> = {
         [PurchaseOrderStatus.DRAFT]: 'bg-gray-500/20 text-gray-400',
@@ -124,7 +124,7 @@ const PurchaseOrderContent: React.FC<{
                          <tr key={po.id} className="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                             <td className="p-3 font-medium text-brand-secondary">{po.poNumber}</td>
                             <td className="p-3 text-gray-900 dark:text-white">{getSupplierName(po.supplierId)}</td>
-                            <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{po.orderDate}</td>
+                            <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(po.orderDate)}</td>
                             <td className="p-3 text-right font-semibold text-gray-900 dark:text-white">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(po.totalCost)}</td>
                             <td className="p-3 text-center">
                                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[po.status]}`}>{po.status}</span>
@@ -138,7 +138,7 @@ const PurchaseOrderContent: React.FC<{
                             )}
                          </tr>
                     ))}
-                    {filteredPOs.length === 0 && (
+                    {purchaseOrders.length === 0 && (
                         <tr>
                             <td colSpan={permissions.canEditInventory ? 6 : 5} className="text-center py-8 text-gray-500 dark:text-gray-400">
                                 No purchase orders found.
@@ -147,7 +147,7 @@ const PurchaseOrderContent: React.FC<{
                     )}
                 </tbody>
             </table>
-             {filteredPOs.length > 0 && (
+             {purchaseOrders.length > 0 && (
                 <Pagination currentPage={poCurrentPage} totalPages={poTotalPages} onPageChange={poGoToPage} />
             )}
          </div>
@@ -166,15 +166,20 @@ const InventoryPage: React.FC = () => {
         receivePurchaseOrder,
     } = useData();
     const { addNotification } = useNotification();
+    const confirm = useConfirmation();
     const permissions = usePermissions();
 
     const [activeTab, setActiveTab] = useState<Tab>('products');
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
     
     const [isProductModalOpen, setProductModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isPOModalOpen, setPOModalOpen] = useState(false);
     const [editingPO, setEditingPO] = useState<PurchaseOrder | null>(null);
+
+    const filteredProducts = useMemo(() => products.filter(p => p.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) || p.sku.toLowerCase().includes(debouncedSearchTerm.toLowerCase())), [products, debouncedSearchTerm]);
+    const filteredPOs = useMemo(() => purchaseOrders.filter(po => po.poNumber.toLowerCase().includes(debouncedSearchTerm.toLowerCase())), [purchaseOrders, debouncedSearchTerm]);
 
     // Product Handlers
     const handleSaveProduct = async (product: Omit<Product, 'id'> & { id?: string }) => {
@@ -193,14 +198,14 @@ const InventoryPage: React.FC = () => {
         }
     };
     const handleDeleteProduct = async (productId: string) => {
-        if (window.confirm("Are you sure?")) {
-            try {
-                await deleteProduct(productId);
-                addNotification('Product deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete product.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({ title: 'Delete Product', message: 'Are you sure?', confirmVariant: 'danger' });
+        if (!isConfirmed) return;
+        try {
+            await deleteProduct(productId);
+            addNotification('Product deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete product.', 'error');
+            console.error(error);
         }
     }
    
@@ -221,25 +226,25 @@ const InventoryPage: React.FC = () => {
         }
     };
     const handleDeletePO = async (poId: string) => {
-        if (window.confirm("Are you sure?")) {
-            try {
-                await deletePurchaseOrder(poId);
-                addNotification('Purchase Order deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete purchase order.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({ title: 'Delete Purchase Order', message: 'Are you sure?', confirmVariant: 'danger' });
+        if (!isConfirmed) return;
+        try {
+            await deletePurchaseOrder(poId);
+            addNotification('Purchase Order deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete purchase order.', 'error');
+            console.error(error);
         }
     };
     const handleReceivePO = async (poId: string) => {
-        if(window.confirm('Are you sure you want to mark this PO as received? This will update stock levels.')) {
-            try {
-                await receivePurchaseOrder(poId);
-                addNotification('Purchase Order received and stock updated.', 'success');
-            } catch (error) {
-                addNotification('Failed to receive purchase order.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({ title: 'Receive Order', message: 'Are you sure you want to mark this PO as received? This will update stock levels.' });
+        if (!isConfirmed) return;
+        try {
+            await receivePurchaseOrder(poId);
+            addNotification('Purchase Order received and stock updated.', 'success');
+        } catch (error) {
+            addNotification('Failed to receive purchase order.', 'error');
+            console.error(error);
         }
     }
     
@@ -285,17 +290,15 @@ const InventoryPage: React.FC = () => {
             <div className="mt-4">
                 {activeTab === 'products' ? (
                     <ProductContent 
-                        products={products}
-                        searchTerm={searchTerm}
+                        products={filteredProducts}
                         permissions={permissions}
                         onEdit={(product) => { setEditingProduct(product); setProductModalOpen(true); }}
                         onDelete={handleDeleteProduct}
                     />
                 ) : (
                     <PurchaseOrderContent 
-                        purchaseOrders={purchaseOrders}
+                        purchaseOrders={filteredPOs}
                         contacts={contacts}
-                        searchTerm={searchTerm}
                         permissions={permissions}
                         onEdit={(po) => { setEditingPO(po); setPOModalOpen(true); }}
                         onDelete={handleDeletePO}

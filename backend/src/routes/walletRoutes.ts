@@ -1,9 +1,10 @@
 
-import { Router } from 'express';
+
+import express from 'express';
 import { getAllWallets, createWallet, updateWallet, deleteWallet } from '../controllers/walletController';
 import { protect } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 // Apply the 'protect' middleware to all routes in this file
 router.use(protect);

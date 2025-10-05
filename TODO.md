@@ -69,7 +69,7 @@ This document outlines the remaining tasks to complete the Elevare application b
 - [x] **.EXE
 
 ### 2. Testing
-- [ ] **Unit Tests:** Add basic unit tests for key components and logic (e.g., calculations in `ReportsPage`).
+- [x] **Unit Tests:** Add basic unit tests for key components and logic (e.g., calculations in `ReportsPage`).
 - [ ] **Integration Tests:** (Placeholder for backend)
 - [ ] **E2E Tests:** (Placeholder for Playwright/Cypress)
 
@@ -84,3 +84,31 @@ This document outlines the remaining tasks to complete the Elevare application b
 - [x] **Accessibility:** Perform a final audit for WCAG compliance.
 - [ ] **Offline Support:** (Placeholder for mobile)
 - [x] **Notifications:** Add a simple notification component/system in the UI.
+
+## Future Features & Enhancements (Post-V1)
+
+### 1. Core Accounting
+- [ ] **Bank Reconciliation:** Create a UI to match imported bank transactions with system records.
+- [ ] **Audit Trail:** Log all create, update, and delete actions on critical financial records for compliance.
+- [ ] **Tax Management:** Implement a basic system for applying, tracking, and reporting sales tax on transactions.
+### 2. Integrations
+- [ ] **Payment Gateways:** Integrate Stripe or PayPal or apple pay to allow customers to pay invoices directly via the Customer Portal.
+- [ ] **Email Integration:** Implement functionality to send invoices, reminders, and purchase orders directly from the app.
+
+### 3. User Experience & Customization
+- [ ] **Custom Fields:** Allow users to add custom data fields to modules like contacts, invoices, and products.
+- [x] **Role-Based Dashboards:** Create default dashboard layouts tailored to different user roles (Admin, Accountant, HR Manager, etc.).
+- [x] **Onboarding Tour:** Implement a guided tour for new users to explain key features of the application.
+
+### 4. Security
+- [ ] **Two-Factor Authentication (2FA):** Add 2FA options for enhanced user account security.
+
+## Polish & UX Improvements (Pre-Release Checklist)
+- [x] **Custom Confirmation Modals:** Replace all `window.confirm()` calls with a consistent, styled modal component.
+- [x] **Enhanced Empty States:** Improve "No data" messages to include illustrations and clear call-to-action buttons (e.g., "Add your first transaction").
+- [x] **Consistent Notifications:** Replace all native `alert()` calls with the `useNotification` system for a unified user experience.
+- [x] **Date Localization:** Use `Intl.DateTimeFormat` with the current language from `I18nContext` to format all user-facing dates.
+- [x] **Debounced Search:** Implement debouncing on all search inputs to improve performance, especially for future server-side searching.
+- [x] **Advanced Form Validation:** Add more robust client-side validation for forms (e.g., email format, password strength during user creation).
+- [x] **User Avatars:** Allow users to upload an avatar or generate a default one based on their initials, replacing the placeholder.
+- [x] **Onboarding Tour:** Implement an animated, guided tour for new sign-up users.

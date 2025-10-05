@@ -1,9 +1,10 @@
 
-import { Router } from 'express';
+
+import express from 'express';
 import { getAllEmployees, createEmployee, updateEmployee, deleteEmployee } from '../controllers/employeeController';
 import { protect } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 router.use(protect);
 

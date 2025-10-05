@@ -3,6 +3,7 @@ import { TransactionType } from '../types.ts';
 import { usePermissions } from '../hooks/usePermissions.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { ReportsSkeleton } from './Skeletons.tsx';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
 
 type ReportType = 'pnl' | 'balance-sheet';
 
@@ -15,6 +16,7 @@ const ReportsPage: React.FC = () => {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
     const [startDate, setStartDate] = useState(firstDayOfMonth);
     const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
+    const formatDate = useLocalizedDate();
 
     const convertToUSD = (amount: number, currency: 'USD' | 'EUR') => {
         return amount * (exchangeRates[currency] || 1);
@@ -91,7 +93,7 @@ const ReportsPage: React.FC = () => {
     const renderPnlReport = () => (
         <>
             <h2 className="text-3xl font-bold text-center">Profit & Loss Statement</h2>
-            <p className="text-center text-gray-600 mb-8">For the period from {startDate} to {endDate} (in USD)</p>
+            <p className="text-center text-gray-600 mb-8">For the period from {formatDate(startDate)} to {formatDate(endDate)} (in USD)</p>
 
             <div className="mb-8">
                 <h3 className="text-xl font-semibold border-b-2 border-gray-800 pb-2 mb-2">Revenue</h3>
@@ -147,7 +149,7 @@ const ReportsPage: React.FC = () => {
     const renderBalanceSheet = () => (
         <>
             <h2 className="text-3xl font-bold text-center">Balance Sheet</h2>
-            <p className="text-center text-gray-600 mb-8">As of {endDate} (in USD)</p>
+            <p className="text-center text-gray-600 mb-8">As of {formatDate(endDate)} (in USD)</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Assets */}

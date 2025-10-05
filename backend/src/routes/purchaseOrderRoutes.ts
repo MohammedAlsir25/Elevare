@@ -1,9 +1,10 @@
 
-import { Router } from 'express';
+
+import express from 'express';
 import { getAllPurchaseOrders, createPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receiveOrder } from '../controllers/purchaseOrderController';
 import { protect } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 router.use(protect);
 

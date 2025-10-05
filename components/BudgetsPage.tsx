@@ -7,6 +7,7 @@ import { FlagIcon, EditIcon, DeleteIcon } from '../constants.tsx';
 import { usePermissions } from '../hooks/usePermissions.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { useNotification } from '../contexts/NotificationContext.tsx';
+import { useConfirmation } from '../contexts/ConfirmationContext.tsx';
 import { CardGridSkeleton } from './Skeletons.tsx';
 
 type Tab = 'budgets' | 'goals';
@@ -133,6 +134,7 @@ const BudgetsPage: React.FC = () => {
 
     const permissions = usePermissions();
     const { addNotification } = useNotification();
+    const confirm = useConfirmation();
     
     const [activeTab, setActiveTab] = useState<Tab>('budgets');
 
@@ -165,14 +167,20 @@ const BudgetsPage: React.FC = () => {
     };
 
     const handleDeleteBudget = async (budgetId: string) => {
-        if (window.confirm('Are you sure you want to delete this budget?')) {
-            try {
-                await deleteBudget(budgetId);
-                addNotification('Budget deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete budget.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({
+            title: 'Delete Budget',
+            message: 'Are you sure you want to delete this budget?',
+            confirmText: 'Delete',
+            confirmVariant: 'danger',
+        });
+        if (!isConfirmed) return;
+
+        try {
+            await deleteBudget(budgetId);
+            addNotification('Budget deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete budget.', 'error');
+            console.error(error);
         }
     };
     
@@ -193,14 +201,20 @@ const BudgetsPage: React.FC = () => {
     };
 
     const handleDeleteGoal = async (goalId: string) => {
-        if (window.confirm('Are you sure you want to delete this goal?')) {
-            try {
-                await deleteGoal(goalId);
-                addNotification('Goal deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete goal.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({
+            title: 'Delete Goal',
+            message: 'Are you sure you want to delete this financial goal?',
+            confirmText: 'Delete',
+            confirmVariant: 'danger',
+        });
+        if (!isConfirmed) return;
+
+        try {
+            await deleteGoal(goalId);
+            addNotification('Goal deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete goal.', 'error');
+            console.error(error);
         }
     };
     

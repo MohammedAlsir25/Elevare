@@ -1,9 +1,10 @@
 
-import { Router } from 'express';
+
+import express from 'express';
 import { getAllBudgets, createBudget, updateBudget, deleteBudget } from '../controllers/budgetController';
 import { protect } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 router.use(protect);
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { JournalEntry, JournalEntryLine, Account } from '../types.ts';
 import { DeleteIcon } from '../constants.tsx';
 import { useModal } from '../hooks/useModal.ts';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 interface JournalEntryModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface JournalEntryModalProps {
 }
 
 const JournalEntryModal: React.FC<JournalEntryModalProps> = ({ isOpen, onClose, onSave, entry, accounts }) => {
+    const { addNotification } = useNotification();
     const modalRef = useModal(isOpen, onClose);
     const today = new Date().toISOString().split('T')[0];
     const [date, setDate] = useState(today);
@@ -69,7 +71,7 @@ const JournalEntryModal: React.FC<JournalEntryModalProps> = ({ isOpen, onClose, 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!isBalanced) {
-            alert("Debits and credits must be balanced.");
+            addNotification("Debits and credits must be balanced and greater than zero.", 'error');
             return;
         }
         const finalLines = lines.map((l, i) => ({

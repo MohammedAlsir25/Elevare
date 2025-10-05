@@ -1,6 +1,7 @@
 import React from 'react';
 import { Transaction, TransactionType, SortConfig } from '../types.ts';
 import { ChevronUpDownIcon, ChevronUpIcon, ChevronDownIcon, EditIcon, DeleteIcon } from '../constants.tsx';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
 
 interface TransactionsTableProps {
   transactions: Transaction[];
@@ -13,6 +14,7 @@ interface TransactionsTableProps {
 
 const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, title = "Transactions", onEdit, onDelete, requestSort, sortConfig }) => {
   const showActions = !!onEdit && !!onDelete;
+  const formatDate = useLocalizedDate();
 
   const getSortIndicator = (key: string) => {
     if (!requestSort) return null;
@@ -66,7 +68,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, tit
                         <span className="font-medium text-gray-800 dark:text-gray-200">{tx.description}</span>
                     </div>
                 </td>
-                <td className="p-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{tx.date}</td>
+                <td className="p-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(tx.date)}</td>
                 <td className="p-3 text-gray-800 dark:text-gray-300 whitespace-nowrap">
                     <span className="px-2 py-1 text-xs font-medium rounded-full" style={{ backgroundColor: tx.category.color+'20', color: tx.category.color }}>
                         {tx.category.name}
@@ -87,13 +89,6 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, tit
                 )}
               </tr>
             ))}
-             {transactions.length === 0 && (
-                <tr>
-                    <td colSpan={showActions ? 5 : 4} className="text-center py-8 text-gray-500 dark:text-gray-500">
-                        No transactions found.
-                    </td>
-                </tr>
-             )}
           </tbody>
         </table>
       </div>

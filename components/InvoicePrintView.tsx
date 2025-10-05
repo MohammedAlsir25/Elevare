@@ -2,6 +2,7 @@ import React from 'react';
 import { Invoice } from '../types.ts';
 import { useSettings } from '../contexts/SettingsContext.tsx';
 import { useModal } from '../hooks/useModal.ts';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
 
 interface InvoicePrintViewProps {
     invoice: Invoice;
@@ -12,6 +13,7 @@ const InvoicePrintView: React.FC<InvoicePrintViewProps> = ({ invoice, onClose })
     const { settings } = useSettings();
     const modalRef = useModal(true, onClose); // Hook is active as long as component is mounted
     const companySettings = settings.company;
+    const formatDate = useLocalizedDate();
 
     const handlePrint = () => {
         const printContent = document.getElementById('printable-invoice');
@@ -87,11 +89,11 @@ const InvoicePrintView: React.FC<InvoicePrintViewProps> = ({ invoice, onClose })
                         <div className="text-right">
                             <div className="mb-2">
                                 <span className="font-bold text-gray-600">Issue Date: </span>
-                                <span>{invoice.issueDate}</span>
+                                <span>{formatDate(invoice.issueDate)}</span>
                             </div>
                             <div>
                                 <span className="font-bold text-gray-600">Due Date: </span>
-                                <span>{invoice.dueDate}</span>
+                                <span>{formatDate(invoice.dueDate)}</span>
                             </div>
                         </div>
                     </div>

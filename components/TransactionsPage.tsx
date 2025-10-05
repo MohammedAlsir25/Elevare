@@ -1,17 +1,21 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Transaction, TransactionType, Category, Wallet, RecurringTransaction, SortConfig } from '../types.ts';
 import TransactionsTable from './TransactionsTable.tsx';
 import TransactionModal from './TransactionModal.tsx';
 import RecurringTransactionModal from './RecurringTransactionModal.tsx';
 import StatementImportModal from './StatementImportModal.tsx';
 import { usePermissions } from '../hooks/usePermissions.ts';
-import { ArrowPathIcon, ArrowUpTrayIcon, EditIcon, DeleteIcon } from '../constants.tsx';
+import { ArrowPathIcon, ArrowUpTrayIcon, EditIcon, DeleteIcon, DocumentTextIcon } from '../constants.tsx';
 import { useData } from '../contexts/DataContext.tsx';
 import { useNotification } from '../contexts/NotificationContext.tsx';
+import { useConfirmation } from '../contexts/ConfirmationContext.tsx';
 import { usePagination } from '../hooks/usePagination.ts';
 import Pagination from './Pagination.tsx';
 import { useSortableData } from '../hooks/useSortableData.ts';
 import { PageWithTableSkeleton } from './Skeletons.tsx';
+import EmptyState from './EmptyState.tsx';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
+import { useDebounce } from '../hooks/useDebounce.ts';
 
 type Tab = 'single' | 'recurring';
 
@@ -32,7 +36,9 @@ const TransactionsPage: React.FC = () => {
     } = useData();
     
     const { addNotification } = useNotification();
+    const confirm = useConfirmation();
     const permissions = usePermissions();
+    const formatDate = useLocalizedDate();
 
     // UI State
     const [activeTab, setActiveTab] = useState<Tab>('single');
@@ -48,6 +54,7 @@ const TransactionsPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
     
     // Single Transaction Handlers
     const handleSave = async (transaction: Omit<Transaction, 'id'> & { id?: string }) => {
@@ -67,24 +74,30 @@ const TransactionsPage: React.FC = () => {
     };
 
     const handleDelete = async (transactionId: string) => {
-        if (window.confirm('Are you sure you want to delete this transaction?')) {
-            try {
-                await deleteTransaction(transactionId);
-                addNotification('Transaction deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete transaction.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({
+            title: 'Delete Transaction',
+            message: 'Are you sure you want to delete this transaction? This action cannot be undone.',
+            confirmText: 'Delete',
+            confirmVariant: 'danger',
+        });
+        if (!isConfirmed) return;
+        
+        try {
+            await deleteTransaction(transactionId);
+            addNotification('Transaction deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete transaction.', 'error');
+            console.error(error);
         }
     };
     const filteredTransactions = useMemo(() => {
         return transactions.filter(t => {
-            const searchMatch = t.description.toLowerCase().includes(searchTerm.toLowerCase());
+            const searchMatch = t.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
             const typeMatch = typeFilter === 'all' || t.type === typeFilter;
             const categoryMatch = categoryFilter === 'all' || t.category.id === categoryFilter;
             return searchMatch && typeMatch && categoryMatch;
         });
-    }, [transactions, searchTerm, typeFilter, categoryFilter]);
+    }, [transactions, debouncedSearchTerm, typeFilter, categoryFilter]);
 
     const { items: sortedTransactions, requestSort, sortConfig } = useSortableData(filteredTransactions);
 
@@ -113,14 +126,20 @@ const TransactionsPage: React.FC = () => {
     };
 
     const handleDeleteRecurring = async (rtId: string) => {
-        if (window.confirm('Are you sure you want to delete this recurring transaction?')) {
-            try {
-                await deleteRecurringTransaction(rtId);
-                 addNotification('Recurring transaction deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete recurring transaction.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({
+            title: 'Delete Recurring Transaction',
+            message: 'Are you sure you want to delete this recurring transaction?',
+            confirmText: 'Delete',
+            confirmVariant: 'danger',
+        });
+        if (!isConfirmed) return;
+
+        try {
+            await deleteRecurringTransaction(rtId);
+             addNotification('Recurring transaction deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete recurring transaction.', 'error');
+            console.error(error);
         }
     };
 
@@ -157,64 +176,77 @@ const TransactionsPage: React.FC = () => {
         </div>
     );
 
-    const renderRecurringContent = () => (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="overflow-x-auto">
-                 <table className="w-full text-left">
-                    <thead className="border-b border-gray-200 dark:border-gray-600">
-                        <tr>
-                            <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Description</th>
-                            <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Frequency</th>
-                            <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Next Due</th>
-                            <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Category</th>
-                            <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400 text-right">Amount</th>
-                            {permissions.canEditTransactions && <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400 text-center">Actions</th>}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedRecurring.map(rt => (
-                             <tr key={rt.id} className="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                <td className="p-3 whitespace-nowrap">
-                                    <div className="flex items-center">
-                                        <div className="p-2 rounded-full mr-3 bg-gray-200 dark:bg-gray-700">
-                                            <ArrowPathIcon className="h-5 w-5 text-gray-500 dark:text-gray-400"/>
-                                        </div>
-                                        <span className="font-medium text-gray-800 dark:text-gray-200">{rt.description}</span>
-                                    </div>
-                                </td>
-                                <td className="p-3 text-gray-500 dark:text-gray-400">{rt.frequency}</td>
-                                <td className="p-3 text-gray-500 dark:text-gray-400">{rt.nextDueDate}</td>
-                                <td className="p-3 text-gray-800 dark:text-gray-300">
-                                    <span className="px-2 py-1 text-xs font-medium rounded-full" style={{ backgroundColor: rt.category.color+'20', color: rt.category.color }}>
-                                        {rt.category.name}
-                                    </span>
-                                </td>
-                                <td className={`p-3 font-semibold text-right ${rt.type === TransactionType.INCOME ? 'text-accent-green' : 'text-gray-800 dark:text-gray-200'}`}>
-                                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: rt.currency }).format(rt.amount)}
-                                </td>
-                                {permissions.canEditTransactions && (
-                                    <td className="p-3 text-center">
-                                        <button onClick={() => { setEditingRecurring(rt); setIsRecurringModalOpen(true); }} className="text-gray-500 dark:text-gray-400 hover:text-brand-primary p-1"><EditIcon className="h-5 w-5" /></button>
-                                        <button onClick={() => handleDeleteRecurring(rt.id)} className="text-gray-500 dark:text-gray-400 hover:text-accent-red p-1 ml-2"><DeleteIcon className="h-5 w-5" /></button>
-                                    </td>
-                                )}
-                             </tr>
-                        ))}
-                        {recurringTransactions.length === 0 && (
+    const renderRecurringContent = () => {
+        if (recurringTransactions.length === 0) {
+            return (
+                <EmptyState
+                    icon={ArrowPathIcon}
+                    title="No Recurring Transactions"
+                    message="Set up automatic transactions for your regular bills and income."
+                    action={permissions.canEditTransactions ? {
+                        label: 'Add Recurring Transaction',
+                        onClick: () => { setEditingRecurring(null); setIsRecurringModalOpen(true); }
+                    } : undefined}
+                />
+            );
+        }
+
+        return (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                     <table className="w-full text-left">
+                        <thead className="border-b border-gray-200 dark:border-gray-600">
                             <tr>
-                                <td colSpan={permissions.canEditTransactions ? 6 : 5} className="text-center py-8 text-gray-500">
-                                    No recurring transactions found.
-                                </td>
+                                <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Description</th>
+                                <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Frequency</th>
+                                <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Start Date</th>
+                                <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">End Date</th>
+                                <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Next Due</th>
+                                <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Category</th>
+                                <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400 text-right">Amount</th>
+                                {permissions.canEditTransactions && <th className="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400 text-center">Actions</th>}
                             </tr>
-                        )}
-                    </tbody>
-                 </table>
+                        </thead>
+                        <tbody>
+                            {paginatedRecurring.map(rt => (
+                                 <tr key={rt.id} className="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                    <td className="p-3 whitespace-nowrap">
+                                        <div className="flex items-center">
+                                            <div className="p-2 rounded-full mr-3 bg-gray-200 dark:bg-gray-700">
+                                                <ArrowPathIcon className="h-5 w-5 text-gray-500 dark:text-gray-400"/>
+                                            </div>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200">{rt.description}</span>
+                                        </div>
+                                    </td>
+                                    <td className="p-3 text-gray-500 dark:text-gray-400">{rt.frequency}</td>
+                                    <td className="p-3 text-gray-500 dark:text-gray-400">{formatDate(rt.startDate)}</td>
+                                    <td className="p-3 text-gray-500 dark:text-gray-400">{rt.endDate ? formatDate(rt.endDate) : 'N/A'}</td>
+                                    <td className="p-3 text-gray-500 dark:text-gray-400">{formatDate(rt.nextDueDate)}</td>
+                                    <td className="p-3 text-gray-800 dark:text-gray-300">
+                                        <span className="px-2 py-1 text-xs font-medium rounded-full" style={{ backgroundColor: rt.category.color+'20', color: rt.category.color }}>
+                                            {rt.category.name}
+                                        </span>
+                                    </td>
+                                    <td className={`p-3 font-semibold text-right ${rt.type === TransactionType.INCOME ? 'text-accent-green' : 'text-gray-800 dark:text-gray-200'}`}>
+                                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: rt.currency }).format(rt.amount)}
+                                    </td>
+                                    {permissions.canEditTransactions && (
+                                        <td className="p-3 text-center">
+                                            <button onClick={() => { setEditingRecurring(rt); setIsRecurringModalOpen(true); }} className="text-gray-500 dark:text-gray-400 hover:text-brand-primary p-1"><EditIcon className="h-5 w-5" /></button>
+                                            <button onClick={() => handleDeleteRecurring(rt.id)} className="text-gray-500 dark:text-gray-400 hover:text-accent-red p-1 ml-2"><DeleteIcon className="h-5 w-5" /></button>
+                                        </td>
+                                    )}
+                                 </tr>
+                            ))}
+                        </tbody>
+                     </table>
+                </div>
+                {recurringTransactions.length > 0 && (
+                    <Pagination currentPage={recurringCurrentPage} totalPages={recurringTotalPages} onPageChange={recurringGoToPage} />
+                )}
             </div>
-            {recurringTransactions.length > 0 && (
-                <Pagination currentPage={recurringCurrentPage} totalPages={recurringTotalPages} onPageChange={recurringGoToPage} />
-            )}
-        </div>
-    );
+        );
+    };
 
     return (
         <div className="space-y-6">
@@ -255,23 +287,35 @@ const TransactionsPage: React.FC = () => {
             
             <div className="mt-4">
                 {activeTab === 'single' ? (
-                    <>
-                    <TransactionsTable 
-                        transactions={paginatedTransactions} 
-                        onEdit={permissions.canEditTransactions ? (t) => {setEditingTransaction(t); setIsModalOpen(true);} : undefined} 
-                        onDelete={permissions.canEditTransactions ? handleDelete : undefined} 
-                        title="All Transactions"
-                        requestSort={requestSort}
-                        sortConfig={sortConfig}
-                    />
-                     {filteredTransactions.length > 0 && (
-                        <Pagination 
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={goToPage}
+                    filteredTransactions.length > 0 ? (
+                        <>
+                            <TransactionsTable 
+                                transactions={paginatedTransactions} 
+                                onEdit={permissions.canEditTransactions ? (t) => {setEditingTransaction(t); setIsModalOpen(true);} : undefined} 
+                                onDelete={permissions.canEditTransactions ? handleDelete : undefined} 
+                                title="All Transactions"
+                                requestSort={requestSort}
+                                sortConfig={sortConfig}
+                            />
+                            {filteredTransactions.length > 10 && (
+                                <Pagination 
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={goToPage}
+                                />
+                            )}
+                        </>
+                    ) : (
+                        <EmptyState 
+                            icon={DocumentTextIcon}
+                            title="No Transactions Found"
+                            message="Get started by adding a new transaction or importing a bank statement."
+                            action={permissions.canEditTransactions ? {
+                                label: 'Add Transaction',
+                                onClick: () => { setEditingTransaction(null); setIsModalOpen(true); }
+                            } : undefined}
                         />
-                    )}
-                    </>
+                    )
                 ) : (
                     renderRecurringContent()
                 )}

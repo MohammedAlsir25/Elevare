@@ -5,9 +5,12 @@ import JournalEntryModal from './JournalEntryModal.tsx';
 import { usePermissions } from '../hooks/usePermissions.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { useNotification } from '../contexts/NotificationContext.tsx';
+import { useConfirmation } from '../contexts/ConfirmationContext.tsx';
 import { EditIcon, DeleteIcon, ChevronUpDownIcon, ChevronUpIcon, ChevronDownIcon } from '../constants.tsx';
 import { useSortableData } from '../hooks/useSortableData.ts';
 import { PageWithTableSkeleton } from './Skeletons.tsx';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
+import { useDebounce } from '../hooks/useDebounce.ts';
 
 const typeColors: { [key in AccountType]: string } = {
     [AccountType.ASSET]: 'bg-blue-500/20 text-blue-400',
@@ -22,13 +25,11 @@ type Tab = 'accounts' | 'journal';
 // --- Accounts Content Component ---
 const AccountsContent: React.FC<{
     accounts: Account[];
-    searchTerm: string;
     permissions: ReturnType<typeof usePermissions>;
     onEdit: (account: Account) => void;
     onDelete: (id: string) => void;
-}> = ({ accounts, searchTerm, permissions, onEdit, onDelete }) => {
-    const filteredAccounts = useMemo(() => accounts.filter(acc => acc.name.toLowerCase().includes(searchTerm.toLowerCase()) || acc.code.toLowerCase().includes(searchTerm.toLowerCase())), [accounts, searchTerm]);
-    const { items: sortedAccounts, requestSort, sortConfig } = useSortableData(filteredAccounts);
+}> = ({ accounts, permissions, onEdit, onDelete }) => {
+    const { items: sortedAccounts, requestSort, sortConfig } = useSortableData(accounts);
 
     const getSortIndicator = (key: string) => {
         if (!sortConfig || sortConfig.key !== key) return <ChevronUpDownIcon className="h-4 w-4 ml-1 text-gray-400 opacity-0 group-hover:opacity-100" />;
@@ -74,13 +75,12 @@ const AccountsContent: React.FC<{
 // --- Journal Content Component ---
 const JournalContent: React.FC<{
     journalEntries: JournalEntry[];
-    searchTerm: string;
     permissions: ReturnType<typeof usePermissions>;
     onEdit: (entry: JournalEntry) => void;
     onDelete: (id: string) => void;
-}> = ({ journalEntries, searchTerm, permissions, onEdit, onDelete }) => {
-     const filteredJournalEntries = useMemo(() => journalEntries.filter(je => je.ref.toLowerCase().includes(searchTerm.toLowerCase())), [journalEntries, searchTerm]);
-     const { items: sortedJournalEntries, requestSort, sortConfig } = useSortableData(filteredJournalEntries);
+}> = ({ journalEntries, permissions, onEdit, onDelete }) => {
+     const { items: sortedJournalEntries, requestSort, sortConfig } = useSortableData(journalEntries);
+     const formatDate = useLocalizedDate();
      const getSortIndicator = (key: string) => {
         if (!sortConfig || sortConfig.key !== key) return <ChevronUpDownIcon className="h-4 w-4 ml-1 text-gray-400 opacity-0 group-hover:opacity-100" />;
         if (sortConfig.direction === 'ascending') return <ChevronUpIcon className="h-4 w-4 ml-1" />;
@@ -105,7 +105,7 @@ const JournalContent: React.FC<{
                             const totalDebit = entry.lines.reduce((sum, line) => sum + line.debit, 0);
                             return (
                                 <tr key={entry.id} className="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                    <td className="p-3 text-gray-500 dark:text-gray-400">{entry.date}</td>
+                                    <td className="p-3 text-gray-500 dark:text-gray-400">{formatDate(entry.date)}</td>
                                     <td className="p-3 font-medium text-gray-900 dark:text-white">{entry.ref}</td>
                                     <td className="p-3 text-right text-gray-800 dark:text-gray-300">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalDebit)}</td>
                                     <td className="p-3 text-right text-gray-800 dark:text-gray-300">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalDebit)}</td>
@@ -134,15 +134,20 @@ const AccountingPage: React.FC = () => {
         addJournalEntry, updateJournalEntry, deleteJournalEntry
     } = useData();
     const { addNotification } = useNotification();
+    const confirm = useConfirmation();
     const permissions = usePermissions();
     
     const [activeTab, setActiveTab] = useState<Tab>('accounts');
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
     const [editingAccount, setEditingAccount] = useState<Account | null>(null);
     const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
     const [editingJournalEntry, setEditingJournalEntry] = useState<JournalEntry | null>(null);
+
+    const filteredAccounts = useMemo(() => accounts.filter(acc => acc.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) || acc.code.toLowerCase().includes(debouncedSearchTerm.toLowerCase())), [accounts, debouncedSearchTerm]);
+    const filteredJournalEntries = useMemo(() => journalEntries.filter(je => je.ref.toLowerCase().includes(debouncedSearchTerm.toLowerCase())), [journalEntries, debouncedSearchTerm]);
 
     const handleSaveAccount = async (account: Omit<Account, 'id'> & { id?: string }) => {
         try {
@@ -161,14 +166,14 @@ const AccountingPage: React.FC = () => {
     };
     
     const handleDeleteAccount = async (accountId: string) => {
-        if(window.confirm('Are you sure? This could affect existing journal entries.')) {
-            try {
-                await deleteAccount(accountId);
-                addNotification('Account deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete account.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({ title: 'Delete Account', message: 'Are you sure? This could affect existing journal entries.', confirmVariant: 'danger' });
+        if (!isConfirmed) return;
+        try {
+            await deleteAccount(accountId);
+            addNotification('Account deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete account.', 'error');
+            console.error(error);
         }
     };
     
@@ -189,14 +194,14 @@ const AccountingPage: React.FC = () => {
     };
     
      const handleDeleteJournal = async (entryId: string) => {
-        if(window.confirm('Are you sure?')) {
-            try {
-                await deleteJournalEntry(entryId);
-                addNotification('Journal entry deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete journal entry.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({ title: 'Delete Journal Entry', message: 'Are you sure?', confirmVariant: 'danger' });
+        if (!isConfirmed) return;
+        try {
+            await deleteJournalEntry(entryId);
+            addNotification('Journal entry deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete journal entry.', 'error');
+            console.error(error);
         }
     };
     
@@ -256,16 +261,14 @@ const AccountingPage: React.FC = () => {
             <div className="mt-4">
                 {activeTab === 'accounts' ? (
                     <AccountsContent 
-                        accounts={accounts} 
-                        searchTerm={searchTerm} 
+                        accounts={filteredAccounts} 
                         permissions={permissions}
                         onEdit={(account) => { setEditingAccount(account); setIsAccountModalOpen(true); }}
                         onDelete={handleDeleteAccount}
                     />
                 ) : (
                     <JournalContent 
-                        journalEntries={journalEntries}
-                        searchTerm={searchTerm}
+                        journalEntries={filteredJournalEntries}
                         permissions={permissions}
                         onEdit={(entry) => { setEditingJournalEntry(entry); setIsJournalModalOpen(true); }}
                         onDelete={handleDeleteJournal}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Employee } from '../types.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { useModal } from '../hooks/useModal.ts';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 interface EmployeeModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface EmployeeModalProps {
 
 const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, employee }) => {
     const { isSubmitting } = useData();
+    const { addNotification } = useNotification();
     const modalRef = useModal(isOpen, onClose);
     const today = new Date().toISOString().split('T')[0];
     const [formData, setFormData] = useState({
@@ -57,6 +59,11 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            addNotification('Please enter a valid email address.', 'error');
+            return;
+        }
         onSave({ id: employee?.id, ...formData });
     };
 

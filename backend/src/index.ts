@@ -1,10 +1,11 @@
 
+
 import dotenv from 'dotenv';
 // Load environment variables from .env file
 // This MUST be at the top, before any other imports that need process.env
 dotenv.config();
 
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
 import db from './db';
 import authRoutes from './routes/authRoutes';
@@ -25,7 +26,7 @@ import userRoutes from './routes/userRoutes';
 import aiRoutes from './routes/aiRoutes';
 
 
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware

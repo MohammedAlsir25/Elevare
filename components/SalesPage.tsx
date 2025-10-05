@@ -9,10 +9,13 @@ import { generateInvoicePdf } from '../services/pdfService.ts';
 import { useSettings } from '../contexts/SettingsContext.tsx';
 import { useData } from '../contexts/DataContext.tsx';
 import { useNotification } from '../contexts/NotificationContext.tsx';
+import { useConfirmation } from '../contexts/ConfirmationContext.tsx';
 import { usePagination } from '../hooks/usePagination.ts';
 import Pagination from './Pagination.tsx';
 import { useSortableData } from '../hooks/useSortableData.ts';
 import { PageWithTableSkeleton } from './Skeletons.tsx';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
+import { useDebounce } from '../hooks/useDebounce.ts';
 
 const statusColors: { [key in InvoiceStatus]: string } = {
     [InvoiceStatus.PAID]: 'bg-accent-green/20 text-accent-green',
@@ -26,11 +29,14 @@ type Tab = 'invoices' | 'pipeline';
 const SalesPage: React.FC = () => {
     const { loading, invoices, contacts, addInvoice, updateInvoice, deleteInvoice, updateContact } = useData();
     const { addNotification } = useNotification();
+    const confirm = useConfirmation();
     const permissions = usePermissions();
     const { settings } = useSettings();
+    const formatDate = useLocalizedDate();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
     const [activeTab, setActiveTab] = useState<Tab>('invoices');
 
@@ -45,14 +51,20 @@ const SalesPage: React.FC = () => {
     };
 
     const handleDelete = async (invoiceId: string) => {
-        if (window.confirm('Are you sure you want to delete this invoice?')) {
-            try {
-                await deleteInvoice(invoiceId);
-                addNotification('Invoice deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete invoice.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({
+            title: 'Delete Invoice',
+            message: 'Are you sure you want to delete this invoice?',
+            confirmText: 'Delete',
+            confirmVariant: 'danger',
+        });
+        if (!isConfirmed) return;
+
+        try {
+            await deleteInvoice(invoiceId);
+            addNotification('Invoice deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete invoice.', 'error');
+            console.error(error);
         }
     };
 
@@ -86,11 +98,11 @@ const SalesPage: React.FC = () => {
     
     const filteredInvoices = useMemo(() => {
         return invoices.filter(inv => 
-            inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            inv.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            inv.customer.company.toLowerCase().includes(searchTerm.toLowerCase())
+            inv.invoiceNumber.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+            inv.customer.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+            inv.customer.company.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
         );
-    }, [invoices, searchTerm]);
+    }, [invoices, debouncedSearchTerm]);
     
     const { items: sortedInvoices, requestSort, sortConfig } = useSortableData(filteredInvoices);
 
@@ -166,8 +178,8 @@ const SalesPage: React.FC = () => {
                                         <div className="font-medium text-gray-900 dark:text-white">{invoice.customer.name}</div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400">{invoice.customer.company}</div>
                                     </td>
-                                    <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{invoice.issueDate}</td>
-                                    <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{invoice.dueDate}</td>
+                                    <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(invoice.issueDate)}</td>
+                                    <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(invoice.dueDate)}</td>
                                     <td className="p-3 text-right font-semibold text-gray-900 dark:text-white">
                                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(invoice.totalAmount)}
                                     </td>

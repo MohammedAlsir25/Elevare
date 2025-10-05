@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AdminUser, UserRole } from '../types.ts';
 import { useModal } from '../hooks/useModal.ts';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 interface UserModalProps {
     isOpen: boolean;
@@ -9,6 +10,7 @@ interface UserModalProps {
 }
 
 const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave }) => {
+    const { addNotification } = useNotification();
     const modalRef = useModal(isOpen, onClose);
     const [formData, setFormData] = useState({
         name: '',
@@ -25,6 +27,11 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave }) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            addNotification('Please enter a valid email address.', 'error');
+            return;
+        }
         onSave(formData);
     };
 

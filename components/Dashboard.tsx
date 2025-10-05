@@ -71,7 +71,7 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Metric Cards */}
           {permissions.canViewFinancialWidgets && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div data-tour-id="metric-cards-grid" className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {dashboardLayout.netWorth && <MetricCard title="Net Worth (USD)" value={netWorth} format="currency" trend="+2.5%" />}
                 {dashboardLayout.income && <MetricCard title="Monthly Income (USD)" value={totalIncome} format="currency" trend="+10%" />}
                 {dashboardLayout.expenses && <MetricCard title="Monthly Expenses (USD)" value={totalExpense} format="currency" trend="-5%" isNegative />}
@@ -106,11 +106,13 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-1 space-y-6">
           {/* Category Chart */}
           {dashboardLayout.categoryChart && permissions.canViewFinancialWidgets && (
-            <CategoryChart 
-              data={transactions.filter(t => t.amount < 0)} 
-              onCategoryClick={setCategoryFilter}
-              activeCategory={categoryFilter}
-            />
+            <div data-tour-id="expense-chart">
+              <CategoryChart 
+                data={transactions.filter(t => t.amount < 0)} 
+                onCategoryClick={setCategoryFilter}
+                activeCategory={categoryFilter}
+              />
+            </div>
           )}
         </div>
       </div>

@@ -1,9 +1,10 @@
 
-import { Router } from 'express';
+
+import express from 'express';
 import { getAllJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from '../controllers/journalEntryController';
 import { protect } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 router.use(protect);
 

@@ -3,6 +3,7 @@ import { Invoice, InvoiceStatus, Contact, InvoiceLineItem, ContactType } from '.
 import { useData } from '../contexts/DataContext.tsx';
 import { DeleteIcon } from '../constants.tsx';
 import { useModal } from '../hooks/useModal.ts';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 interface InvoiceModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface InvoiceModalProps {
 
 const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, onSave, invoice, customers }) => {
     const { isSubmitting } = useData();
+    const { addNotification } = useNotification();
     const modalRef = useModal(isOpen, onClose);
     const today = new Date().toISOString().split('T')[0];
     const [customerId, setCustomerId] = useState('');
@@ -69,6 +71,13 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, onSave, in
     
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        const invalidLineItem = lineItems.some(item => (item.quantity || 0) <= 0 || (item.unitPrice || 0) < 0);
+        if (invalidLineItem) {
+            addNotification('All line items must have a quantity greater than 0 and a non-negative price.', 'error');
+            return;
+        }
+
         const customer = customers.find(c => c.id === customerId)!;
         const finalLineItems = lineItems.map((li, index) => ({
             ...li,

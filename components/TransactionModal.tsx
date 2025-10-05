@@ -3,6 +3,7 @@ import { Transaction, TransactionType, Category, Wallet } from '../types.ts';
 import * as api from '../services/api.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { useModal } from '../hooks/useModal.ts';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 interface TransactionModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ interface TransactionModalProps {
 
 const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, onSave, transaction, categories, wallets }) => {
     const { isSubmitting } = useData();
+    const { addNotification } = useNotification();
     const modalRef = useModal(isOpen, onClose);
     const [formData, setFormData] = useState({
         description: '',
@@ -78,7 +80,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, on
                 }));
             } catch (error) {
                 console.error("OCR failed", error);
-                alert("Failed to scan receipt. Please enter details manually.");
+                addNotification("Failed to scan receipt. Please enter details manually.", 'error');
             } finally {
                 setIsOcrLoading(false);
             }
@@ -107,6 +109,12 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, on
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (formData.amount <= 0) {
+            addNotification('Amount must be greater than zero.', 'error');
+            return;
+        }
+
         const category = categories.find(c => c.id === formData.categoryId)!;
         const wallet = wallets.find(w => w.id === formData.walletId)!;
         

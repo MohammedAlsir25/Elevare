@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Contact, CustomerStatus, ContactType } from '../types.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { useModal } from '../hooks/useModal.ts';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 interface ContactModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface ContactModalProps {
 
 const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onSave, contact }) => {
     const { isSubmitting } = useData();
+    const { addNotification } = useNotification();
     const modalRef = useModal(isOpen, onClose);
     const [formData, setFormData] = useState({
         name: '',
@@ -59,6 +61,11 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onSave, co
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            addNotification('Please enter a valid email address.', 'error');
+            return;
+        }
         onSave({ id: contact?.id, ...formData });
     };
 

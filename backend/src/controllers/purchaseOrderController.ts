@@ -1,5 +1,4 @@
 
-
 import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../db';
@@ -39,7 +38,7 @@ export const createPurchaseOrder = async (req: AuthRequest, res: Response) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, po_number as "poNumber", supplier_id as "supplierId", order_date as "orderDate", expected_date as "expectedDate", status, line_items as "lineItems", total_cost as "totalCost", company_id as "companyId";
         `;
-        const values = [id, poNumber, supplierId, orderDate, expectedDate, JSON.stringify(lineItems), totalCost, companyId];
+        const values = [id, poNumber, supplierId, orderDate, expectedDate, status, JSON.stringify(lineItems), totalCost, companyId];
         const { rows } = await db.query(query, values);
         
         res.status(201).json(rows[0]);

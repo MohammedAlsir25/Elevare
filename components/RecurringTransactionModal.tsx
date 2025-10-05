@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RecurringTransaction, TransactionType, Category, Wallet, Frequency } from '../types.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { useModal } from '../hooks/useModal.ts';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 interface RecurringTransactionModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface RecurringTransactionModalProps {
 
 const RecurringTransactionModal: React.FC<RecurringTransactionModalProps> = ({ isOpen, onClose, onSave, transaction, categories, wallets }) => {
     const { isSubmitting } = useData();
+    const { addNotification } = useNotification();
     const modalRef = useModal(isOpen, onClose);
     const today = new Date().toISOString().split('T')[0];
     const [formData, setFormData] = useState({
@@ -61,6 +63,12 @@ const RecurringTransactionModal: React.FC<RecurringTransactionModalProps> = ({ i
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (formData.amount <= 0) {
+            addNotification('Amount must be greater than zero.', 'error');
+            return;
+        }
+
         const category = categories.find(c => c.id === formData.categoryId)!;
         const wallet = wallets.find(w => w.id === formData.walletId)!;
         

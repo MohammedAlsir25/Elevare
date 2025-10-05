@@ -59,7 +59,8 @@ export const generateInvoicePdf = (invoice: Invoice, company: CompanySettings) =
         tableRows.push(itemData);
     });
 
-    doc.autoTable({
+    // FIX: Cast doc to any to access autoTable method from jspdf-autotable plugin
+    (doc as any).autoTable({
         head: [tableColumn],
         body: tableRows,
         startY: 80,
@@ -68,6 +69,7 @@ export const generateInvoicePdf = (invoice: Invoice, company: CompanySettings) =
     });
 
     // Total
+    // FIX: Cast doc to any to access lastAutoTable property from jspdf-autotable plugin
     const finalY = (doc as any).lastAutoTable.finalY;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');

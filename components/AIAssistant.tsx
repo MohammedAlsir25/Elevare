@@ -51,6 +51,7 @@ const AIAssistant: React.FC = () => {
   if (!isOpen) {
     return (
         <button
+            data-tour-id="ai-assistant"
             onClick={() => setIsOpen(true)}
             className="fixed bottom-6 right-6 bg-gradient-to-br from-brand-primary to-brand-secondary text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
             aria-label="Open AI Assistant"

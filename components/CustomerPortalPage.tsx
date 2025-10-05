@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Contact, Invoice, InvoiceStatus } from '../types.ts';
 import * as api from '../services/api.ts';
 import { useModal } from '../hooks/useModal.ts';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
 
 interface CustomerPortalPageProps {
     customer: Contact;
@@ -21,6 +22,7 @@ const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ customer, onClo
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const modalRef = useModal(true, onClose);
+    const formatDate = useLocalizedDate();
 
     useEffect(() => {
         const fetchInvoices = async () => {
@@ -74,8 +76,8 @@ const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ customer, onClo
                                     {invoices.map(invoice => (
                                         <tr key={invoice.id} className="border-b border-gray-200 dark:border-gray-700 last:border-0">
                                             <td className="p-3 font-medium text-brand-secondary">{invoice.invoiceNumber}</td>
-                                            <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{invoice.issueDate}</td>
-                                            <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{invoice.dueDate}</td>
+                                            <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(invoice.issueDate)}</td>
+                                            <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(invoice.dueDate)}</td>
                                             <td className="p-3 text-right font-semibold text-gray-900 dark:text-white">
                                                 {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(invoice.totalAmount)}
                                             </td>

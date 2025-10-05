@@ -1,9 +1,10 @@
 
-import { Router } from 'express';
+
+import express from 'express';
 import { getAllTransactions, createTransaction, updateTransaction, deleteTransaction } from '../controllers/transactionController';
 import { protect } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 // Apply the 'protect' middleware to all routes in this file
 router.use(protect);

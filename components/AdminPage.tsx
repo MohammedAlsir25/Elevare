@@ -3,22 +3,28 @@ import { AdminUser, UserRole } from '../types.ts';
 import { useNotification } from '../contexts/NotificationContext.tsx';
 import { useData } from '../contexts/DataContext.tsx';
 import UserModal from './UserModal.tsx';
+import { useConfirmation } from '../contexts/ConfirmationContext.tsx';
 import { usePagination } from '../hooks/usePagination.ts';
 import Pagination from './Pagination.tsx';
 import { DeleteIcon, ChevronUpDownIcon, ChevronUpIcon, ChevronDownIcon } from '../constants.tsx';
 import { useSortableData } from '../hooks/useSortableData.ts';
 import { PageWithTableSkeleton } from './Skeletons.tsx';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
+import { useDebounce } from '../hooks/useDebounce.ts';
 
 const AdminPage: React.FC = () => {
     const { loading, users, addUser, updateUser, deleteUser } = useData();
     const { addNotification } = useNotification();
+    const confirm = useConfirmation();
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const formatDate = useLocalizedDate();
 
     const filteredUsers = useMemo(() => {
         if (!users) return [];
-        return users.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase()));
-    }, [users, searchTerm]);
+        return users.filter(u => u.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) || u.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
+    }, [users, debouncedSearchTerm]);
 
     const { items: sortedUsers, requestSort, sortConfig } = useSortableData(filteredUsers);
 
@@ -43,14 +49,20 @@ const AdminPage: React.FC = () => {
     };
     
     const handleDeleteUser = async (userId: string) => {
-        if (window.confirm('Are you sure you want to delete this user?')) {
-            try {
-                await deleteUser(userId);
-                addNotification('User deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete user.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({
+            title: 'Delete User',
+            message: 'Are you sure you want to delete this user?',
+            confirmText: 'Delete',
+            confirmVariant: 'danger',
+        });
+        if (!isConfirmed) return;
+
+        try {
+            await deleteUser(userId);
+            addNotification('User deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete user.', 'error');
+            console.error(error);
         }
     };
 
@@ -122,7 +134,7 @@ const AdminPage: React.FC = () => {
                                             {Object.values(UserRole).map(r => <option key={r} value={r}>{r}</option>)}
                                         </select>
                                     </td>
-                                    <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{user.lastLogin}</td>
+                                    <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(user.lastLogin, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                                     <td className="p-3 text-center">
                                         <button onClick={() => handleDeleteUser(user.id)} className="text-gray-500 dark:text-gray-400 hover:text-accent-red p-1 ml-2">
                                             <DeleteIcon className="h-5 w-5" />

@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { SIDEBAR_LINKS, LogoutIcon, CogIcon } from '../constants.tsx';
+import { SIDEBAR_LINKS, LogoutIcon, CogIcon, QuestionMarkCircleIcon } from '../constants.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePermissions } from '../hooks/usePermissions.ts';
 import { useI18n } from '../contexts/I18nContext.tsx';
 import { useCompany } from '../contexts/CompanyContext.tsx';
+import Avatar from './Avatar.tsx';
+import { useTour } from '../contexts/TourContext.tsx';
 
 interface SidebarProps {
     activeView: string;
@@ -16,6 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
   const permissions = usePermissions();
   const { companies, selectedCompanyId, setSelectedCompanyId } = useCompany();
   const { t } = useI18n();
+  const { startTour } = useTour();
 
   const visibleLinks = useMemo(() => {
     return SIDEBAR_LINKS.filter(link => {
@@ -43,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
         </div>
         
         {/* Company Switcher */}
-        <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+        <div data-tour-id="company-switcher" className="p-2 border-b border-gray-200 dark:border-gray-700">
             <select 
                 value={selectedCompanyId || ''} 
                 onChange={e => setSelectedCompanyId(e.target.value)}
@@ -54,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
             </select>
         </div>
 
-        <nav className="flex-1 px-2 py-4 overflow-y-auto">
+        <nav data-tour-id="navigation-panel" className="flex-1 px-2 py-4 overflow-y-auto">
           <ul role="list" className="space-y-2">
             {visibleLinks.map((link) => (
               <li key={link.name}>
@@ -73,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
         <div className={`p-2 border-t border-gray-200 dark:border-gray-700`}>
             <div className={`p-2 ${!isOpen && 'hidden'}`}>
                 <div className="flex items-center">
-                    <img className="h-10 w-10 rounded-full" src="https://i.pravatar.cc/100" alt="User" />
+                    <Avatar name={user?.name || ''} />
                     <div className="ml-3">
                         <p className="text-sm font-medium text-gray-800 dark:text-white">{user?.name}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
@@ -81,6 +84,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
                 </div>
             </div>
              <div className="mt-2 space-y-1">
+                 <button
+                    onClick={startTour}
+                    className="w-full flex items-center p-2 text-base rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    <QuestionMarkCircleIcon className="h-6 w-6" />
+                    <span className={`ml-4 ${!isOpen && 'hidden'}`}>Help / Tour</span>
+                </button>
                  {permissions.canViewSettings && (
                      <button
                         onClick={() => setActiveView('Settings')}

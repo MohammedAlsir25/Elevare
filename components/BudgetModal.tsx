@@ -3,6 +3,7 @@ import { Budget, BudgetPeriod, Category } from '../types.ts';
 import { CATEGORIES } from '../constants.tsx';
 import { useData } from '../contexts/DataContext.tsx';
 import { useModal } from '../hooks/useModal.ts';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 interface BudgetModalProps {
     isOpen: boolean;
@@ -13,6 +14,7 @@ interface BudgetModalProps {
 
 const BudgetModal: React.FC<BudgetModalProps> = ({ isOpen, onClose, onSave, budget }) => {
     const { isSubmitting } = useData();
+    const { addNotification } = useNotification();
     const modalRef = useModal(isOpen, onClose);
     const [formData, setFormData] = useState({
         categoryId: Object.values(CATEGORIES).filter(c => c.type === 'Expense')[0]?.id || '',
@@ -49,6 +51,11 @@ const BudgetModal: React.FC<BudgetModalProps> = ({ isOpen, onClose, onSave, budg
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (Number(formData.amount) <= 0) {
+            addNotification('Budget amount must be greater than zero.', 'error');
+            return;
+        }
+
         const budgetData = {
             id: budget?.id,
             ...formData,

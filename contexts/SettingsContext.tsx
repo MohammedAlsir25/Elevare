@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { DashboardLayout } from '../types.ts';
+import { DashboardLayout, User, UserRole } from '../types.ts';
 
 interface CompanySettings {
     name: string;
@@ -33,16 +33,17 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 const SETTINGS_STORAGE_KEY = 'elevare-settings-v3';
 
+const defaultLayouts: Record<UserRole, DashboardLayout> = {
+    [UserRole.ADMIN]: { netWorth: true, income: true, expenses: true, transactions: true, categoryChart: true, aiAssistant: true },
+    [UserRole.ACCOUNTANT]: { netWorth: true, income: true, expenses: true, transactions: true, categoryChart: true, aiAssistant: false },
+    [UserRole.HR_MANAGER]: { netWorth: false, income: false, expenses: false, transactions: true, categoryChart: false, aiAssistant: false },
+    [UserRole.EMPLOYEE]: { netWorth: false, income: false, expenses: false, transactions: true, categoryChart: false, aiAssistant: false },
+    [UserRole.VIEWER]: { netWorth: false, income: false, expenses: false, transactions: true, categoryChart: false, aiAssistant: false },
+};
+
 const initialSettings: AppSettings = {
     company: { name: 'Your Company', address: '123 Main St, Anytown, USA', logo: null },
-    dashboardLayout: {
-        netWorth: true,
-        income: true,
-        expenses: true,
-        transactions: true,
-        categoryChart: true,
-        aiAssistant: true,
-    },
+    dashboardLayout: defaultLayouts[UserRole.ADMIN], // Default fallback
     theme: 'dark', // Default to dark theme
     themeColors: {
         primary: '#4f46e5',
@@ -50,28 +51,36 @@ const initialSettings: AppSettings = {
     }
 };
 
-export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [settings, setSettings] = useState<AppSettings>(() => {
-        try {
-            const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-            if (storedSettings) {
-                const parsed = JSON.parse(storedSettings);
-                // Ensure themeColors exists for backward compatibility
-                if (!parsed.themeColors) {
-                    parsed.themeColors = initialSettings.themeColors;
-                }
-                return parsed;
+
+const getInitialSettings = (user: User): AppSettings => {
+    try {
+        const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (storedSettings) {
+            const parsed = JSON.parse(storedSettings);
+            // Ensure themeColors exists for backward compatibility
+            if (!parsed.themeColors) {
+                parsed.themeColors = initialSettings.themeColors;
             }
-            // Check for system preference if no setting is stored
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-                return { ...initialSettings, theme: 'light' };
-            }
-            return initialSettings;
-        } catch (error) {
-            console.error("Failed to parse settings from localStorage", error);
-            return initialSettings;
+            return parsed;
         }
-    });
+        // No stored settings, create defaults based on role and system preferences
+        const preferredTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+        const roleLayout = defaultLayouts[user.role] || defaultLayouts[UserRole.VIEWER];
+
+        return {
+            ...initialSettings,
+            dashboardLayout: roleLayout,
+            theme: preferredTheme,
+        };
+    } catch (error) {
+        console.error("Failed to parse settings from localStorage", error);
+        return initialSettings;
+    }
+};
+
+
+export const SettingsProvider: React.FC<{ children: ReactNode; user: User }> = ({ children, user }) => {
+    const [settings, setSettings] = useState<AppSettings>(() => getInitialSettings(user));
 
     useEffect(() => {
         try {

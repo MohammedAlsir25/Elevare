@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FinancialGoal } from '../types.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { useModal } from '../hooks/useModal.ts';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 interface GoalModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface GoalModalProps {
 
 const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSave, goal }) => {
     const { isSubmitting } = useData();
+    const { addNotification } = useNotification();
     const modalRef = useModal(isOpen, onClose);
     const [formData, setFormData] = useState({
         name: '',
@@ -44,6 +46,10 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSave, goal }) 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (formData.targetAmount <= 0) {
+            addNotification('Target amount must be greater than zero.', 'error');
+            return;
+        }
         onSave({ id: goal?.id, ...formData });
     };
 

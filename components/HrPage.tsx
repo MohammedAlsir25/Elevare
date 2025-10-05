@@ -6,9 +6,12 @@ import ExpenseClaimModal from './ExpenseClaimModal.tsx';
 import { usePermissions } from '../hooks/usePermissions.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { useNotification } from '../contexts/NotificationContext.tsx';
+import { useConfirmation } from '../contexts/ConfirmationContext.tsx';
 import { EditIcon, DeleteIcon, ChevronUpDownIcon, ChevronUpIcon, ChevronDownIcon } from '../constants.tsx';
 import { useSortableData } from '../hooks/useSortableData.ts';
 import { PageWithTableSkeleton } from './Skeletons.tsx';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
+import { useDebounce } from '../hooks/useDebounce.ts';
 
 // --- Reusable Sortable Header Component ---
 type SortableHeaderProps = {
@@ -46,14 +49,13 @@ const SortableHeader: React.FC<SortableHeaderProps> = ({ children, sortKey, requ
 // --- Employee Table Component ---
 interface EmployeeContentProps {
     employees: Employee[];
-    searchTerm: string;
     permissions: ReturnType<typeof usePermissions>;
     onEdit: (employee: Employee) => void;
     onDelete: (id: string) => void;
 }
-const EmployeeContent: React.FC<EmployeeContentProps> = ({ employees, searchTerm, permissions, onEdit, onDelete }) => {
-    const filteredEmployees = useMemo(() => employees.filter(e => e.name.toLowerCase().includes(searchTerm.toLowerCase())), [employees, searchTerm]);
-    const { items: sortedEmployees, requestSort, sortConfig } = useSortableData(filteredEmployees);
+const EmployeeContent: React.FC<EmployeeContentProps> = ({ employees, permissions, onEdit, onDelete }) => {
+    const { items: sortedEmployees, requestSort, sortConfig } = useSortableData(employees);
+    const formatDate = useLocalizedDate();
     return (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
              <div className="overflow-x-auto">
@@ -80,7 +82,7 @@ const EmployeeContent: React.FC<EmployeeContentProps> = ({ employees, searchTerm
                                     <div className="text-sm text-gray-800 dark:text-gray-300">{employee.email}</div>
                                     <div className="text-sm text-gray-500 dark:text-gray-400">{employee.phone}</div>
                                 </td>
-                                <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{employee.joiningDate}</td>
+                                <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(employee.joiningDate)}</td>
                                 <td className="p-3 text-sm text-gray-800 dark:text-gray-300 font-semibold text-right">
                                     {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(employee.salary)}
                                 </td>
@@ -110,6 +112,7 @@ interface TimesheetContentProps {
 const TimesheetContent: React.FC<TimesheetContentProps> = ({ timesheets, employees, permissions, onEdit, onDelete }) => {
     const getEmployeeName = (id: string) => employees.find(e => e.id === id)?.name || 'Unknown';
     const { items: sortedTimesheets, requestSort, sortConfig } = useSortableData(timesheets);
+    const formatDate = useLocalizedDate();
     const statusColors: Record<TimesheetStatus, string> = {
         [TimesheetStatus.PENDING]: 'bg-accent-yellow/20 text-accent-yellow',
         [TimesheetStatus.APPROVED]: 'bg-accent-green/20 text-accent-green',
@@ -131,7 +134,7 @@ const TimesheetContent: React.FC<TimesheetContentProps> = ({ timesheets, employe
                     {sortedTimesheets.map(ts => (
                         <tr key={ts.id} className="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                             <td className="p-3 font-medium text-gray-900 dark:text-white">{getEmployeeName(ts.employeeId)}</td>
-                            <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{ts.date}</td>
+                            <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(ts.date)}</td>
                              <td className="p-3 text-sm text-gray-800 dark:text-gray-300">{ts.description}</td>
                             <td className="p-3 text-right font-semibold text-gray-900 dark:text-white">{ts.hours.toFixed(2)}</td>
                             <td className="p-3 text-center">
@@ -164,6 +167,7 @@ const ExpenseClaimContent: React.FC<ExpenseClaimContentProps> = ({ expenseClaims
      const getEmployeeName = (id: string) => employees.find(e => e.id === id)?.name || 'Unknown';
      const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'Unknown';
      const { items: sortedClaims, requestSort, sortConfig } = useSortableData(expenseClaims);
+     const formatDate = useLocalizedDate();
      const statusColors: Record<ExpenseClaimStatus, string> = {
         [ExpenseClaimStatus.PENDING]: 'bg-accent-yellow/20 text-accent-yellow',
         [ExpenseClaimStatus.APPROVED]: 'bg-accent-green/20 text-accent-green',
@@ -187,7 +191,7 @@ const ExpenseClaimContent: React.FC<ExpenseClaimContentProps> = ({ expenseClaims
                     {sortedClaims.map(claim => (
                         <tr key={claim.id} className="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                             <td className="p-3 font-medium text-gray-900 dark:text-white">{getEmployeeName(claim.employeeId)}</td>
-                            <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{claim.date}</td>
+                            <td className="p-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(claim.date)}</td>
                             <td className="p-3 text-sm text-gray-800 dark:text-gray-300">{claim.description}</td>
                             <td className="p-3 text-sm text-gray-800 dark:text-gray-300">{getCategoryName(claim.categoryId)}</td>
                             <td className="p-3 text-right font-semibold text-gray-900 dark:text-white">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(claim.amount)}</td>
@@ -228,10 +232,12 @@ const HrPage: React.FC = () => {
         addExpenseClaim, updateExpenseClaim, approveExpenseClaim,
     } = useData();
     const { addNotification } = useNotification();
+    const confirm = useConfirmation();
     const permissions = usePermissions();
     
     const [activeTab, setActiveTab] = useState<Tab>('employees');
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     // Modals state
     const [isEmployeeModalOpen, setEmployeeModalOpen] = useState(false);
@@ -240,6 +246,8 @@ const HrPage: React.FC = () => {
     const [editingTimesheet, setEditingTimesheet] = useState<TimesheetEntry | null>(null);
     const [isClaimModalOpen, setClaimModalOpen] = useState(false);
     const [editingClaim, setEditingClaim] = useState<ExpenseClaim | null>(null);
+
+    const filteredEmployees = useMemo(() => employees.filter(e => e.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())), [employees, debouncedSearchTerm]);
 
     // Employee Handlers
     const handleSaveEmployee = async (employee: Omit<Employee, 'id' | 'employeeId'> & { id?: string }) => {
@@ -258,14 +266,14 @@ const HrPage: React.FC = () => {
         }
     };
     const handleDeleteEmployee = async (employeeId: string) => {
-        if (window.confirm('Are you sure?')) {
-            try {
-                await deleteEmployee(employeeId);
-                addNotification('Employee deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete employee.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({ title: 'Delete Employee', message: 'Are you sure?', confirmVariant: 'danger' });
+        if (!isConfirmed) return;
+        try {
+            await deleteEmployee(employeeId);
+            addNotification('Employee deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete employee.', 'error');
+            console.error(error);
         }
     };
 
@@ -286,14 +294,14 @@ const HrPage: React.FC = () => {
         }
     };
      const handleDeleteTimesheet = async (tsId: string) => {
-        if (window.confirm('Are you sure?')) {
-            try {
-                await deleteTimesheet(tsId);
-                addNotification('Timesheet deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete timesheet.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({ title: 'Delete Timesheet', message: 'Are you sure?', confirmVariant: 'danger' });
+        if (!isConfirmed) return;
+        try {
+            await deleteTimesheet(tsId);
+            addNotification('Timesheet deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete timesheet.', 'error');
+            console.error(error);
         }
     };
 
@@ -315,26 +323,26 @@ const HrPage: React.FC = () => {
     };
 
     const handleApproveClaim = async (claimId: string) => {
-        if(window.confirm('Are you sure you want to approve this claim? This will create a transaction.')) {
-            try {
-                await approveExpenseClaim(claimId);
-                addNotification('Claim approved and transaction created.', 'success');
-            } catch (error) {
-                addNotification('Failed to approve claim.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({ title: 'Approve Claim', message: 'Are you sure you want to approve this claim? This will create a transaction.' });
+        if (!isConfirmed) return;
+        try {
+            await approveExpenseClaim(claimId);
+            addNotification('Claim approved and transaction created.', 'success');
+        } catch (error) {
+            addNotification('Failed to approve claim.', 'error');
+            console.error(error);
         }
     };
 
     const handleRejectClaim = async (claim: ExpenseClaim) => {
-        if(window.confirm('Are you sure you want to reject this claim?')) {
-            try {
-                await updateExpenseClaim({ ...claim, status: ExpenseClaimStatus.REJECTED });
-                addNotification('Claim rejected.', 'success');
-            } catch (error) {
-                addNotification('Failed to reject claim.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({ title: 'Reject Claim', message: 'Are you sure you want to reject this claim?', confirmVariant: 'danger' });
+        if (!isConfirmed) return;
+        try {
+            await updateExpenseClaim({ ...claim, status: ExpenseClaimStatus.REJECTED });
+            addNotification('Claim rejected.', 'success');
+        } catch (error) {
+            addNotification('Failed to reject claim.', 'error');
+            console.error(error);
         }
     };
     
@@ -395,8 +403,7 @@ const HrPage: React.FC = () => {
             <div className="mt-4">
                 {activeTab === 'employees' && 
                     <EmployeeContent 
-                        employees={employees}
-                        searchTerm={searchTerm}
+                        employees={filteredEmployees}
                         permissions={permissions}
                         onEdit={(emp) => { setEditingEmployee(emp); setEmployeeModalOpen(true); }}
                         onDelete={handleDeleteEmployee}

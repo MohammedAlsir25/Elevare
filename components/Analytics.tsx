@@ -8,6 +8,7 @@ import { useSettings } from '../contexts/SettingsContext.tsx';
 import * as api from '../services/api.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { AnalyticsSkeleton } from './Skeletons.tsx';
+import { useLocalizedDate } from '../hooks/useLocalizedDate.ts';
 
 type DateRange = 'month' | '30days' | 'year';
 
@@ -16,6 +17,7 @@ const Analytics: React.FC = () => {
   const [forecastData, setForecastData] = useState<{ date: string, balance: number }[]>([]);
   const { settings: { theme } } = useSettings();
   const [dateRange, setDateRange] = useState<DateRange>('month');
+  const formatDate = useLocalizedDate();
 
   // Forecast data is specific to analytics, so we can fetch it here.
   // It could also be moved to DataContext if used elsewhere.
@@ -101,7 +103,7 @@ const Analytics: React.FC = () => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white dark:bg-gray-700 p-3 rounded-md border border-gray-200 dark:border-gray-600 shadow-lg">
-          <p className="label text-gray-600 dark:text-gray-300">{`${label}`}</p>
+          <p className="label text-gray-600 dark:text-gray-300">{formatDate(label)}</p>
           {payload.map((pld: any) => (
               <p key={pld.dataKey} style={{ color: pld.color }}>
                   {`${pld.name}: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(pld.value)}`}
@@ -148,7 +150,7 @@ const Analytics: React.FC = () => {
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={trendData}>
                         <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? "#3a3a3a" : "#e0e0e0"} />
-                        <XAxis dataKey="date" stroke={theme === 'dark' ? "#9a9a9a" : "#7a7a7a"} fontSize={12} tickLine={false} axisLine={false} />
+                        <XAxis dataKey="date" stroke={theme === 'dark' ? "#9a9a9a" : "#7a7a7a"} fontSize={12} tickLine={false} axisLine={false} tickFormatter={(tick) => formatDate(tick, { month: 'short', day: 'numeric' })} />
                         <YAxis stroke={theme === 'dark' ? "#9a9a9a" : "#7a7a7a"} fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => `$${value}`} />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{fontSize: "14px"}}/>
@@ -180,7 +182,7 @@ const Analytics: React.FC = () => {
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={forecastData}>
                         <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? "#3a3a3a" : "#e0e0e0"} />
-                        <XAxis dataKey="date" stroke={theme === 'dark' ? "#9a9a9a" : "#7a7a7a"} fontSize={12} tickLine={false} axisLine={false} />
+                        <XAxis dataKey="date" stroke={theme === 'dark' ? "#9a9a9a" : "#7a7a7a"} fontSize={12} tickLine={false} axisLine={false} tickFormatter={(tick) => formatDate(tick, { month: 'short', day: 'numeric' })} />
                         <YAxis stroke={theme === 'dark' ? "#9a9a9a" : "#7a7a7a"} fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => `$${Math.round(value/1000)}k`} />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{fontSize: "14px"}}/>

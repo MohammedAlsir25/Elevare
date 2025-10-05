@@ -1,5 +1,4 @@
 
-
 import { Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { AuthRequest } from '../middleware/authMiddleware';

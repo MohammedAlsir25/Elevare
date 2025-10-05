@@ -18,6 +18,8 @@ import { usePermissions } from './hooks/usePermissions.ts';
 import AccessDenied from './components/AccessDenied.tsx';
 import Notification from './components/Notification.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
+import { useTourAutoStart } from './contexts/TourContext.tsx';
+import TourGuide from './components/TourGuide.tsx';
 
 function hexToRgb(hex: string): string | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -29,6 +31,7 @@ const AuthenticatedApp: React.FC = () => {
   const [activeView, setActiveView] = useState('Dashboard');
   const { settings: { theme, dashboardLayout, themeColors } } = useSettings();
   const permissions = usePermissions();
+  useTourAutoStart();
   
   useEffect(() => {
     const root = document.documentElement;
@@ -95,6 +98,7 @@ const AuthenticatedApp: React.FC = () => {
         </main>
         <Notification />
         {dashboardLayout.aiAssistant && <AIAssistant />}
+        <TourGuide />
       </div>
   );
 };

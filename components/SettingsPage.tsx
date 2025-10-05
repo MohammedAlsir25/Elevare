@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useSettings } from '../contexts/SettingsContext.tsx';
 import { useI18n } from '../contexts/I18nContext.tsx';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 const SettingsPage: React.FC = () => {
     const { settings, updateCompanySettings, toggleTheme, updateThemeColors } = useSettings();
     const { language, setLanguage, t } = useI18n();
     const [localSettings, setLocalSettings] = useState(settings.company);
     const [localColors, setLocalColors] = useState(settings.themeColors);
+    const { addNotification } = useNotification();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -32,7 +34,7 @@ const SettingsPage: React.FC = () => {
     const handleSaveChanges = () => {
         updateCompanySettings(localSettings);
         updateThemeColors(localColors);
-        alert('Settings saved successfully!');
+        addNotification('Settings saved successfully!', 'success');
     };
 
     return (

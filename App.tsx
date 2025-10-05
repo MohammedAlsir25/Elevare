@@ -7,17 +7,15 @@ import { NotificationProvider } from './contexts/NotificationContext.tsx';
 import { I18nProvider } from './contexts/I18nContext.tsx';
 import { CompanyProvider } from './contexts/CompanyContext.tsx';
 import { DataProvider } from './contexts/DataContext.tsx';
+import { ConfirmationProvider } from './contexts/ConfirmationContext.tsx';
+import { TourProvider } from './contexts/TourContext.tsx';
 
 const App: React.FC = () => {
   return (
     <I18nProvider>
-      <SettingsProvider>
-        <NotificationProvider>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-        </NotificationProvider>
-      </SettingsProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </I18nProvider>
   );
 };
@@ -30,11 +28,19 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <CompanyProvider>
-      <DataProvider>
-        <AuthenticatedApp />
-      </DataProvider>
-    </CompanyProvider>
+    <SettingsProvider user={user}>
+      <NotificationProvider>
+        <ConfirmationProvider>
+          <CompanyProvider>
+            <DataProvider>
+              <TourProvider>
+                <AuthenticatedApp />
+              </TourProvider>
+            </DataProvider>
+          </CompanyProvider>
+        </ConfirmationProvider>
+      </NotificationProvider>
+    </SettingsProvider>
   );
 };
 

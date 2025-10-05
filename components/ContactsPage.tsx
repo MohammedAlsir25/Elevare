@@ -4,12 +4,14 @@ import ContactModal from './ContactModal.tsx';
 import CustomerPortalPage from './CustomerPortalPage.tsx';
 import { usePermissions } from '../hooks/usePermissions.ts';
 import { useNotification } from '../contexts/NotificationContext.tsx';
+import { useConfirmation } from '../contexts/ConfirmationContext.tsx';
 import { ExternalLinkIcon, EditIcon, DeleteIcon, ChevronUpDownIcon, ChevronUpIcon, ChevronDownIcon } from '../constants.tsx';
 import { useData } from '../contexts/DataContext.tsx';
 import { usePagination } from '../hooks/usePagination.ts';
 import Pagination from './Pagination.tsx';
 import { useSortableData } from '../hooks/useSortableData.ts';
 import { PageWithTableSkeleton } from './Skeletons.tsx';
+import { useDebounce } from '../hooks/useDebounce.ts';
 
 const statusColors: { [key in CustomerStatus]: string } = {
     [CustomerStatus.ACTIVE]: 'bg-accent-green/20 text-accent-green',
@@ -24,9 +26,11 @@ const ContactsPage: React.FC = () => {
     
     const permissions = usePermissions();
     const { addNotification } = useNotification();
+    const confirm = useConfirmation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingContact, setEditingContact] = useState<Contact | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const [typeFilter, setTypeFilter] = useState<ContactType | 'all'>('all');
     const [viewingPortalFor, setViewingPortalFor] = useState<Contact | null>(null);
 
@@ -41,14 +45,20 @@ const ContactsPage: React.FC = () => {
     };
 
     const handleDelete = async (contactId: string) => {
-        if (window.confirm('Are you sure you want to delete this contact?')) {
-            try {
-                await deleteContact(contactId);
-                addNotification('Contact deleted.', 'success');
-            } catch (error) {
-                addNotification('Failed to delete contact.', 'error');
-                console.error(error);
-            }
+        const isConfirmed = await confirm({
+            title: 'Delete Contact',
+            message: 'Are you sure you want to delete this contact?',
+            confirmText: 'Delete',
+            confirmVariant: 'danger',
+        });
+        if (!isConfirmed) return;
+
+        try {
+            await deleteContact(contactId);
+            addNotification('Contact deleted.', 'success');
+        } catch (error) {
+            addNotification('Failed to delete contact.', 'error');
+            console.error(error);
         }
     };
 
@@ -70,11 +80,11 @@ const ContactsPage: React.FC = () => {
     
     const filteredContacts = useMemo(() => {
         return contacts.filter(c => {
-            const searchMatch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.company.toLowerCase().includes(searchTerm.toLowerCase());
+            const searchMatch = c.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) || c.company.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
             const typeMatch = typeFilter === 'all' || c.contactType.includes(typeFilter);
             return searchMatch && typeMatch;
         });
-    }, [contacts, searchTerm, typeFilter]);
+    }, [contacts, debouncedSearchTerm, typeFilter]);
     
     const { items: sortedContacts, requestSort, sortConfig } = useSortableData(filteredContacts);
 

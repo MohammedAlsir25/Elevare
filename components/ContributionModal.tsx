@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FinancialGoal, Wallet } from '../types.ts';
 import { useData } from '../contexts/DataContext.tsx';
 import { useModal } from '../hooks/useModal.ts';
+import { useNotification } from '../contexts/NotificationContext.tsx';
 
 interface ContributionModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface ContributionModalProps {
 }
 
 const ContributionModal: React.FC<ContributionModalProps> = ({ isOpen, onClose, onSave, goal, wallets }) => {
+    const { addNotification } = useNotification();
     const { isSubmitting } = useData();
     const modalRef = useModal(isOpen, onClose);
     const [amount, setAmount] = useState(0);
@@ -24,7 +26,7 @@ const ContributionModal: React.FC<ContributionModalProps> = ({ isOpen, onClose, 
         if (amount > 0 && walletId) {
             onSave({ amount, walletId });
         } else {
-            alert("Please enter a valid amount and select a wallet.");
+            addNotification("Please enter a valid amount and select a wallet.", 'error');
         }
     };
 
