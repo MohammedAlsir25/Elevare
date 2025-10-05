@@ -1,9 +1,10 @@
+
+
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../db';
-// FIX: Corrected import path for shared types file.
 import { UserRole } from '../../../types';
 
 // We need a user type for the database query result
@@ -16,13 +17,35 @@ interface DbUser {
     company_id: string;
 }
 
+interface RegisterRequestBody {
+    name: string;
+    email: string;
+    password: string;
+    role: UserRole;
+    companyId: string;
+}
+
+interface LoginRequestBody {
+    email: string;
+    password: string;
+}
+
+const generateTokens = (userPayload: any) => {
+    const accessToken = jwt.sign(userPayload, process.env.JWT_SECRET || 'your_default_secret', {
+        expiresIn: '15m',
+    });
+    const refreshToken = jwt.sign(userPayload, process.env.JWT_REFRESH_SECRET || 'your_default_refresh_secret', {
+        expiresIn: '7d',
+    });
+    return { accessToken, refreshToken };
+};
+
+
 export const register = async (req: Request, res: Response) => {
-    // FIX: Cast req to any to access 'body' due to a type definition issue.
-    const { name, email, password, role, companyId } = (req as any).body;
+    const { name, email, password, role, companyId } = req.body as RegisterRequestBody;
 
     if (!name || !email || !password || !role || !companyId) {
-        // FIX: Cast res to any to access 'status' and 'json' due to a type definition issue.
-        return (res as any).status(400).json({ message: 'All fields are required.' });
+        return res.status(400).json({ message: 'All fields are required.' });
     }
 
     try {
@@ -38,23 +61,19 @@ export const register = async (req: Request, res: Response) => {
 
         const { rows } = await db.query(newUserQuery, [id, name, email, password_hash, role, companyId]);
 
-        // FIX: Cast res to any to access 'status' and 'json' due to a type definition issue.
-        (res as any).status(201).json(rows[0]);
+        return res.status(201).json(rows[0]);
 
     } catch (error) {
         console.error('Registration error:', error);
-        // FIX: Cast res to any to access 'status' and 'json' due to a type definition issue.
-        (res as any).status(500).json({ message: 'Server error during registration.' });
+        return res.status(500).json({ message: 'Server error during registration.' });
     }
 };
 
 export const login = async (req: Request, res: Response) => {
-    // FIX: Cast req to any to access 'body' due to a type definition issue.
-    const { email, password } = (req as any).body;
+    const { email, password } = req.body as LoginRequestBody;
 
     if (!email || !password) {
-        // FIX: Cast res to any to access 'status' and 'json' due to a type definition issue.
-        return (res as any).status(400).json({ message: 'Email and password are required.' });
+        return res.status(400).json({ message: 'Email and password are required.' });
     }
 
     try {
@@ -63,15 +82,13 @@ export const login = async (req: Request, res: Response) => {
         const user: DbUser | undefined = rows[0];
 
         if (!user) {
-            // FIX: Cast res to any to access 'status' and 'json' due to a type definition issue.
-            return (res as any).status(401).json({ message: 'Invalid credentials.' });
+            return res.status(401).json({ message: 'Invalid credentials.' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password_hash);
 
         if (!isMatch) {
-            // FIX: Cast res to any to access 'status' and 'json' due to a type definition issue.
-            return (res as any).status(401).json({ message: 'Invalid credentials.' });
+            return res.status(401).json({ message: 'Invalid credentials.' });
         }
 
         const payload = {
@@ -84,16 +101,69 @@ export const login = async (req: Request, res: Response) => {
             }
         };
 
-        const token = jwt.sign(payload, process.env.JWT_SECRET || 'your_default_secret', {
-            expiresIn: '1h',
-        });
+        const { accessToken, refreshToken } = generateTokens(payload);
+        
+        // Store refresh token in DB
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+        const storeTokenQuery = 'INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES ($1, $2, $3)';
+        await db.query(storeTokenQuery, [refreshToken, user.id, expiresAt]);
 
-        // FIX: Cast res to any to access 'json' due to a type definition issue.
-        (res as any).json({ token, user: payload.user });
+        return res.json({ accessToken, refreshToken, user: payload.user });
 
     } catch (error) {
         console.error('Login error:', error);
-        // FIX: Cast res to any to access 'status' and 'json' due to a type definition issue.
-        (res as any).status(500).json({ message: 'Server error during login.' });
+        return res.status(500).json({ message: 'Server error during login.' });
+    }
+};
+
+export const refreshToken = async (req: Request, res: Response) => {
+    const { token: requestToken } = req.body;
+    if (!requestToken) {
+        return res.status(401).json({ message: "Refresh token not provided."});
+    }
+
+    try {
+        // Check if token exists in DB
+        const tokenQuery = 'SELECT * FROM refresh_tokens WHERE token = $1';
+        const { rows, rowCount } = await db.query(tokenQuery, [requestToken]);
+        if (rowCount === 0) {
+            return res.status(403).json({ message: "Invalid refresh token."});
+        }
+        
+        const storedToken = rows[0];
+        if (new Date(storedToken.expires_at) < new Date()) {
+            // Clean up expired token
+            await db.query('DELETE FROM refresh_tokens WHERE token = $1', [requestToken]);
+            return res.status(403).json({ message: "Refresh token expired."});
+        }
+        
+        // Verify the token
+        const decoded = jwt.verify(requestToken, process.env.JWT_REFRESH_SECRET || 'your_default_refresh_secret');
+        
+        // Don't need to re-generate refresh token, just issue a new access token
+        const payload = { user: (decoded as any).user };
+        const { accessToken } = generateTokens(payload);
+        
+        res.json({ accessToken });
+
+    } catch (error) {
+        console.error("Refresh token error:", error);
+        return res.status(403).json({ message: "Invalid refresh token."});
+    }
+};
+
+export const logout = async (req: Request, res: Response) => {
+    const { token } = req.body;
+    if (!token) {
+        return res.status(400).json({ message: "Token is required." });
+    }
+    
+    try {
+        await db.query('DELETE FROM refresh_tokens WHERE token = $1', [token]);
+        return res.status(204).send(); // No Content
+    } catch (error) {
+        console.error("Logout error:", error);
+        return res.status(500).json({ message: "Server error during logout." });
     }
 };

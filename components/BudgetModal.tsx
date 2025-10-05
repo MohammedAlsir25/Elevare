@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Budget, BudgetPeriod, Category } from '../types.ts';
 import { CATEGORIES } from '../constants.tsx';
 import { useData } from '../contexts/DataContext.tsx';
+import { useModal } from '../hooks/useModal.ts';
 
 interface BudgetModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface BudgetModalProps {
 
 const BudgetModal: React.FC<BudgetModalProps> = ({ isOpen, onClose, onSave, budget }) => {
     const { isSubmitting } = useData();
+    const modalRef = useModal(isOpen, onClose);
     const [formData, setFormData] = useState({
         categoryId: Object.values(CATEGORIES).filter(c => c.type === 'Expense')[0]?.id || '',
         amount: 100,
@@ -58,9 +60,9 @@ const BudgetModal: React.FC<BudgetModalProps> = ({ isOpen, onClose, onSave, budg
     const expenseCategories = Object.values(CATEGORIES).filter(c => c.type === 'Expense');
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog" aria-labelledby="budget-modal-title">
             <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-gray-700">
-                <h2 className="text-2xl font-bold text-white mb-4">{budget ? 'Edit' : 'Add'} Budget</h2>
+                <h2 id="budget-modal-title" className="text-2xl font-bold text-white mb-4">{budget ? 'Edit' : 'Add'} Budget</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                      <div>
                         <label htmlFor="categoryId" className="block text-sm font-medium text-gray-300">Category</label>

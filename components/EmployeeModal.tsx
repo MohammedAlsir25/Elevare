@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Employee } from '../types.ts';
 import { useData } from '../contexts/DataContext.tsx';
+import { useModal } from '../hooks/useModal.ts';
 
 interface EmployeeModalProps {
     isOpen: boolean;
@@ -11,6 +12,7 @@ interface EmployeeModalProps {
 
 const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, employee }) => {
     const { isSubmitting } = useData();
+    const modalRef = useModal(isOpen, onClose);
     const today = new Date().toISOString().split('T')[0];
     const [formData, setFormData] = useState({
         name: '',
@@ -59,9 +61,9 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog" aria-labelledby="employee-modal-title">
             <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-gray-700">
-                <h2 className="text-2xl font-bold text-white mb-4">{employee ? 'Edit' : 'Add'} Employee</h2>
+                <h2 id="employee-modal-title" className="text-2xl font-bold text-white mb-4">{employee ? 'Edit' : 'Add'} Employee</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>

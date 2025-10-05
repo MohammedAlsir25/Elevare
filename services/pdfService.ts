@@ -8,7 +8,6 @@ interface CompanySettings {
     logo: string | null;
 }
 
-// FIX: Removed redundant 'declare module' for jspdf. The 'jspdf-autotable' import handles augmentation.
 export const generateInvoicePdf = (invoice: Invoice, company: CompanySettings) => {
     const doc = new jsPDF();
 

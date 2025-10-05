@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wallet } from '../types.ts';
 import { useData } from '../contexts/DataContext.tsx';
+import { useModal } from '../hooks/useModal.ts';
 
 interface WalletModalProps {
     isOpen: boolean;
@@ -11,6 +12,7 @@ interface WalletModalProps {
 
 const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onSave, wallet }) => {
     const { isSubmitting } = useData();
+    const modalRef = useModal(isOpen, onClose);
     const [name, setName] = useState('');
     const [balance, setBalance] = useState(0);
     const [currency, setCurrency] = useState<'USD' | 'EUR'>('USD');
@@ -41,7 +43,7 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onSave, wall
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog" aria-labelledby="wallet-modal-title">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog" aria-labelledby="wallet-modal-title">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
                 <h2 id="wallet-modal-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{wallet ? 'Edit' : 'Add'} Wallet</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">

@@ -4,7 +4,9 @@
   "description": "Backend for Elevare application",
   "main": "dist/index.js",
   "scripts": {
-    "start": "nodemon src/index.ts"
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",

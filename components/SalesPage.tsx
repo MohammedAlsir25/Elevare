@@ -220,6 +220,16 @@ const SalesPage: React.FC = () => {
             </div>
         </>
     );
+    
+    const renderPipelineContent = () => (
+        <>
+            <div className="sr-only">
+              <h2>Sales Pipeline</h2>
+              <p>This is a Kanban board. Use Tab to navigate between customer cards. Press Space or Enter to pick up a card. Use the left and right arrow keys to move the card to a different column, and press Enter to drop it. Press Escape to cancel the move.</p>
+            </div>
+            <SalesPipelineKanban contacts={contacts} onUpdateContact={handleUpdateContact} />
+        </>
+    );
 
     return (
         <div className="space-y-6">
@@ -238,7 +248,7 @@ const SalesPage: React.FC = () => {
             {renderTabs()}
 
             <div className="mt-4">
-              {activeTab === 'invoices' ? renderInvoicesContent() : <SalesPipelineKanban contacts={contacts} onUpdateContact={handleUpdateContact} />}
+              {activeTab === 'invoices' ? renderInvoicesContent() : renderPipelineContent()}
             </div>
             
             {isModalOpen && (

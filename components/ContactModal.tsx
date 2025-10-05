@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Contact, CustomerStatus, ContactType } from '../types.ts';
 import { useData } from '../contexts/DataContext.tsx';
+import { useModal } from '../hooks/useModal.ts';
 
 interface ContactModalProps {
     isOpen: boolean;
@@ -11,6 +12,7 @@ interface ContactModalProps {
 
 const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onSave, contact }) => {
     const { isSubmitting } = useData();
+    const modalRef = useModal(isOpen, onClose);
     const [formData, setFormData] = useState({
         name: '',
         company: '',
@@ -61,9 +63,9 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onSave, co
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog" aria-labelledby="contact-modal-title">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{contact ? 'Edit' : 'Add'} Contact</h2>
+                <h2 id="contact-modal-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{contact ? 'Edit' : 'Add'} Contact</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>

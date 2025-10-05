@@ -17,10 +17,32 @@ This document outlines the remaining tasks to complete the Elevare application b
 - [x] Refactor `Dashboard` to use `api.ts`.
 - [x] Refactor `Analytics` to use `api.ts`.
 - [x] Refactor `ReportsPage` to use `api.ts`.
-- [ ] **[Backend]** Implement real FastAPI/Node.js backend with REST + GraphQL endpoints.
-- [ ] **[Backend]** Connect frontend `api.ts` to the live backend.
-- [ ] **[Backend]** Implement JWT authentication with refresh tokens.
-- [ ] **[Backend]** Implement database connection with PostgreSQL.
+- [x] **[Backend]** Implement real Node.js backend REST endpoints.
+  - [x] Transactions (GET, POST, PUT, DELETE)
+  - [x] Wallets (GET, POST, PUT, DELETE)
+  - [x] Contacts (GET, POST, PUT, DELETE)
+  - [x] Invoices (GET, POST, PUT, DELETE)
+  - [x] Budgets (GET, POST, PUT, DELETE)
+  - [x] Financial Goals (GET, POST, PUT, DELETE)
+  - [x] HR (Employees, Timesheets, Claims) (GET, POST, PUT, DELETE, Approve)
+  - [x] Accounting (Accounts, Journal Entries) (GET, POST, PUT, DELETE)
+  - [x] Inventory (Products, POs) (GET, POST, PUT, DELETE, Receive)
+  - [x] Admin (Users) (GET, POST, PUT, DELETE)
+- [x] **[Backend]** Connect frontend `api.ts` to the live backend.
+  - [x] Transactions
+  - [x] Wallets
+  - [x] Contacts
+  - [x] Invoices
+  - [x] Budgets
+  - [x] Financial Goals
+  - [x] HR (Employees, Timesheets, Claims)
+  - [x] Accounting (Accounts, Journal Entries)
+  - [x] Inventory (Products, POs)
+  - [x] Admin (Users)
+- [x] **[Backend]** Implement JWT authentication.
+  - [x] JWT verification middleware
+  - [x] Refresh tokens
+- [x] **[Backend]** Implement database connection with PostgreSQL.
 
 ### 2. AI & Automation Features
 - [x] **Receipt OCR:** Implement image upload on `TransactionModal` and connect to a mock OCR endpoint in `api.ts` that returns extracted text (vendor, date, amount).
@@ -43,7 +65,8 @@ This document outlines the remaining tasks to complete the Elevare application b
 
 ### 1. Cross-Platform Builds
 - [ ] **Mobile (React Native):** Create the React Native project structure and share components/logic.
-- [ ] **Desktop (Electron):** Create the Electron project structure, `electron-main.js`, and build scripts for a Windows installer.
+- [x] **Desktop (Electron):** Create the Electron project structure, `electron-main.js`, and build scripts for a Windows installer.
+- [x] **.EXE
 
 ### 2. Testing
 - [ ] **Unit Tests:** Add basic unit tests for key components and logic (e.g., calculations in `ReportsPage`).
@@ -52,8 +75,8 @@ This document outlines the remaining tasks to complete the Elevare application b
 
 ### 3. CI/CD & Deployment
 - [ ] **CI Pipeline:** Create a basic GitHub Actions workflow file to run linters/tests.
-- [ ] **Containerization:** Create `Dockerfile` for frontend and backend.
-- [ ] **Local Dev:** Create `docker-compose.yml` for easy local startup.
+- [x] **Containerization:** Create `Dockerfile` for frontend and backend.
+- [x] **Local Dev:** Create `docker-compose.yml` for easy local startup.
 - [ ] **Deployment:** (Placeholder for AWS/Firebase scripts)
 
 ### 4. Polish & UX

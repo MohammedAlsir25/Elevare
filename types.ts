@@ -1,4 +1,5 @@
-// FIX: Import React to resolve 'Cannot find namespace 'React'' error.
+
+
 import type React from 'react';
 
 export enum TransactionType {
@@ -10,10 +11,8 @@ export enum TransactionType {
 export interface Category {
   id: string;
   name: string;
-  // FIX: Add style prop to icon component type to allow for dynamic coloring.
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   color: string;
-  // FIX: Add type to category to differentiate between income and expense types.
   type: TransactionType.INCOME | TransactionType.EXPENSE;
 }
 
@@ -37,6 +36,24 @@ export interface Transaction {
   companyId?: string;
   color?: string;
 }
+
+// Type for data coming from the backend API
+export interface ApiTransaction {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  currency: 'USD' | 'EUR';
+  type: TransactionType;
+  categoryId: string;
+  walletId: string;
+  companyId: string;
+  color?: string;
+}
+
+// Type for data sent to the backend API for creation/update
+export type ApiTransactionData = Omit<ApiTransaction, 'id' | 'companyId'>;
+
 
 export enum Frequency {
     WEEKLY = 'Weekly',
@@ -90,6 +107,13 @@ export interface Contact {
     companyId?: string;
 }
 
+// Type for data coming from the backend API for contacts
+export type ApiContact = Omit<Contact, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for contact creation/update
+export type ApiContactData = Omit<ApiContact, 'id' | 'companyId' | 'dateAdded'>;
+
+
 export enum InvoiceStatus {
     DRAFT = 'Draft',
     SENT = 'Sent',
@@ -118,6 +142,24 @@ export interface Invoice {
     companyId?: string;
 }
 
+// Type for data coming from the backend API for invoices
+export interface ApiInvoice {
+    id: string;
+    invoiceNumber: string;
+    customerId: string;
+    issueDate: string;
+    dueDate: string;
+    lineItems: InvoiceLineItem[];
+    totalAmount: number;
+    status: InvoiceStatus;
+    pdfUrl?: string;
+    companyId: string;
+}
+
+// Type for data sent to the backend API for invoice creation/update
+export type ApiInvoiceData = Omit<ApiInvoice, 'id' | 'invoiceNumber' | 'companyId' | 'pdfUrl'>;
+
+
 export enum BudgetPeriod {
     MONTHLY = 'Monthly',
     QUARTERLY = 'Quarterly',
@@ -133,6 +175,13 @@ export interface Budget {
     companyId?: string;
 }
 
+// Type for data coming from the backend API for budgets
+export type ApiBudget = Omit<Budget, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for budget creation/update
+export type ApiBudgetData = Omit<ApiBudget, 'id' | 'companyId'>;
+
+
 export interface Employee {
     id: string;
     name: string;
@@ -145,6 +194,13 @@ export interface Employee {
     salary: number;
     companyId?: string;
 }
+
+// Type for data coming from the backend API for employees
+export type ApiEmployee = Omit<Employee, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for employee creation/update
+export type ApiEmployeeData = Omit<ApiEmployee, 'id' | 'employeeId' | 'companyId'>;
+
 
 export enum AccountType {
     ASSET = 'Asset',
@@ -162,6 +218,12 @@ export interface Account {
     companyId?: string;
 }
 
+// Type for data coming from the backend API for accounts
+export type ApiAccount = Omit<Account, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for account creation/update
+export type ApiAccountData = Omit<ApiAccount, 'id' | 'companyId'>;
+
 export interface Product {
     id: string;
     sku: string;
@@ -172,6 +234,13 @@ export interface Product {
     stock: number;
     companyId?: string;
 }
+
+// Type for data coming from the backend API for products
+export type ApiProduct = Omit<Product, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for product creation/update
+export type ApiProductData = Omit<ApiProduct, 'id' | 'companyId'>;
+
 
 export interface JournalEntryLine {
     id: string;
@@ -188,6 +257,13 @@ export interface JournalEntry {
     lines: JournalEntryLine[];
     companyId?: string;
 }
+
+// Type for data coming from the backend API for journal entries
+export type ApiJournalEntry = Omit<JournalEntry, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for journal entry creation/update
+export type ApiJournalEntryData = Omit<ApiJournalEntry, 'id' | 'companyId'>;
+
 
 export enum PurchaseOrderStatus {
     DRAFT = 'Draft',
@@ -215,6 +291,13 @@ export interface PurchaseOrder {
     companyId?: string;
 }
 
+// Type for data coming from the backend API for purchase orders
+export type ApiPurchaseOrder = Omit<PurchaseOrder, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for PO creation/update
+export type ApiPurchaseOrderData = Omit<ApiPurchaseOrder, 'id' | 'poNumber' | 'companyId'>;
+
+
 export enum TimesheetStatus {
     PENDING = 'Pending',
     APPROVED = 'Approved',
@@ -229,6 +312,13 @@ export interface TimesheetEntry {
     status: TimesheetStatus;
     companyId?: string;
 }
+
+// Type for data coming from the backend API for timesheets
+export type ApiTimesheetEntry = Omit<TimesheetEntry, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for timesheet creation/update
+export type ApiTimesheetEntryData = Omit<ApiTimesheetEntry, 'id' | 'companyId'>;
+
 
 export enum ExpenseClaimStatus {
     PENDING = 'Pending',
@@ -246,6 +336,13 @@ export interface ExpenseClaim {
     status: ExpenseClaimStatus;
     companyId?: string;
 }
+
+// Type for data coming from the backend API for expense claims
+export type ApiExpenseClaim = Omit<ExpenseClaim, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for expense claim creation/update
+export type ApiExpenseClaimData = Omit<ApiExpenseClaim, 'id' | 'companyId'>;
+
 
 export interface DashboardLayout {
     netWorth: boolean;
@@ -280,6 +377,13 @@ export interface AdminUser {
     companyId?: string;
 }
 
+// Type for data coming from the backend API for admin users
+export type ApiAdminUser = Omit<AdminUser, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for admin user creation/update
+export type ApiAdminUserData = Omit<ApiAdminUser, 'id' | 'lastLogin' | 'companyId'>;
+
+
 export interface Company {
     id: string;
     name: string;
@@ -294,6 +398,13 @@ export interface FinancialGoal {
     companyId?: string;
 }
 
+// Type for data coming from the backend API for goals
+export type ApiFinancialGoal = Omit<FinancialGoal, 'companyId'> & { companyId: string };
+
+// Type for data sent to the backend API for goal creation/update
+export type ApiFinancialGoalData = Omit<ApiFinancialGoal, 'id' | 'companyId'>;
+
+
 export interface SortConfig {
     key: string;
     direction: 'ascending' | 'descending';
@@ -305,7 +416,6 @@ export interface Notification {
   type: 'success' | 'error';
 }
 
-// FIX: Export DataContextType to resolve import error in DataContext.tsx.
 export interface DataContextType {
     loading: boolean;
     isSubmitting: boolean;

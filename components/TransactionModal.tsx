@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Transaction, TransactionType, Category, Wallet } from '../types.ts';
 import * as api from '../services/api.ts';
 import { useData } from '../contexts/DataContext.tsx';
+import { useModal } from '../hooks/useModal.ts';
 
 interface TransactionModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface TransactionModalProps {
 
 const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, onSave, transaction, categories, wallets }) => {
     const { isSubmitting } = useData();
+    const modalRef = useModal(isOpen, onClose);
     const [formData, setFormData] = useState({
         description: '',
         amount: 0,
@@ -127,7 +129,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, on
         : categories.filter(c => c.type === TransactionType.EXPENSE);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog" aria-labelledby="transaction-modal-title">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog" aria-labelledby="transaction-modal-title">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-gray-200 dark:border-gray-700">
                 <h2 id="transaction-modal-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{transaction ? 'Edit' : 'Add'} Transaction</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">

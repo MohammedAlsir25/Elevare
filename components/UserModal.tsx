@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AdminUser, UserRole } from '../types.ts';
+import { useModal } from '../hooks/useModal.ts';
 
 interface UserModalProps {
     isOpen: boolean;
@@ -8,6 +9,7 @@ interface UserModalProps {
 }
 
 const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave }) => {
+    const modalRef = useModal(isOpen, onClose);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -27,9 +29,9 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog" aria-labelledby="user-modal-title">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Add New User</h2>
+                <h2 id="user-modal-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Add New User</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>

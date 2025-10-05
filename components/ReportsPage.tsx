@@ -100,7 +100,7 @@ const ReportsPage: React.FC = () => {
                         {Object.entries(reportData.incomeByCategory).map(([category, amount]) => (
                             <tr key={category}>
                                 <td className="py-2 pl-4">{category}</td>
-                                <td className="py-2 pr-4 text-right">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)}</td>
+                                <td className="py-2 pr-4 text-right">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount as number)}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -120,7 +120,7 @@ const ReportsPage: React.FC = () => {
                         {Object.entries(reportData.expenseByCategory).map(([category, amount]) => (
                             <tr key={category}>
                                 <td className="py-2 pl-4">{category}</td>
-                                <td className="py-2 pr-4 text-right">({new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)})</td>
+                                <td className="py-2 pr-4 text-right">({new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount as number)})</td>
                             </tr>
                         ))}
                     </tbody>

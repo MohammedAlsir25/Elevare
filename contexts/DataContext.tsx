@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
-import { DataContextType, Transaction, Wallet, Contact, Invoice, Budget, Employee, Account, Product, JournalEntry, PurchaseOrder, TimesheetEntry, ExpenseClaim, FinancialGoal, RecurringTransaction, Category, AdminUser } from '../types.ts';
+import { DataContextType, Transaction, Wallet, Contact, Invoice, Budget, Employee, Account, Product, JournalEntry, PurchaseOrder, TimesheetEntry, ExpenseClaim, FinancialGoal, RecurringTransaction, Category, AdminUser, ApiInvoice } from '../types.ts';
 import * as api from '../services/api.ts';
 import { useCompany } from './CompanyContext.tsx';
 
@@ -31,16 +31,24 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const fetchData = useCallback(async (companyId: string) => {
         setLoading(true);
         try {
+            // Wallets, Categories, and Contacts are needed to enrich other data
+            const [walletsData, categoriesData, contactsData] = await Promise.all([
+                api.getWallets(companyId),
+                api.getCategories(),
+                api.getContacts(companyId),
+            ]);
+            setWallets(walletsData);
+            setCategories(categoriesData);
+            setContacts(contactsData);
+
             const [
-                transactionsData, recurringData, walletsData, contactsData, invoicesData, 
+                apiTransactions, recurringData, apiInvoices, 
                 budgetsData, goalsData, employeesData, accountsData, productsData, 
-                journalData, poData, timesheetData, claimsData, categoriesData, ratesData,
+                journalData, poData, timesheetData, claimsData, ratesData,
                 usersData,
             ] = await Promise.all([
-                api.getTransactions(companyId),
+                api.getTransactions(), // Uses token for companyId
                 api.getRecurringTransactions(companyId),
-                api.getWallets(companyId),
-                api.getContacts(companyId),
                 api.getInvoices(companyId),
                 api.getBudgets(companyId),
                 api.getGoals(companyId),
@@ -51,15 +59,24 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 api.getPurchaseOrders(companyId),
                 api.getTimesheets(companyId),
                 api.getExpenseClaims(companyId),
-                api.getCategories(),
                 api.getExchangeRates(),
                 api.getUsers(companyId),
             ]);
-            setTransactions(transactionsData);
+
+            const enrichedTransactions = apiTransactions.map(t => ({
+                ...t,
+                category: categoriesData.find(c => c.id === t.categoryId)!,
+                wallet: walletsData.find(w => w.id === t.walletId)!,
+            }));
+            setTransactions(enrichedTransactions);
+            
+            const enrichedInvoices = apiInvoices.map(inv => ({
+                ...inv,
+                customer: contactsData.find(c => c.id === inv.customerId)!,
+            }));
+            setInvoices(enrichedInvoices);
+
             setRecurringTransactions(recurringData);
-            setWallets(walletsData);
-            setContacts(contactsData);
-            setInvoices(invoicesData);
             setBudgets(budgetsData);
             setGoals(goalsData);
             setEmployees(employeesData);
@@ -69,7 +86,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setPurchaseOrders(poData);
             setTimesheets(timesheetData);
             setExpenseClaims(claimsData);
-            setCategories(categoriesData);
             setExchangeRates(ratesData);
             setUsers(usersData);
         } catch (error) {
@@ -136,15 +152,99 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setIsSubmitting(false);
         }
     };
+    
+    // Specific handlers for data types that need enrichment after CUD operations
+    const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+        setIsSubmitting(true);
+        try {
+            const { category, wallet, ...rest } = transaction;
+            const apiTransactionData = { ...rest, categoryId: category.id, walletId: wallet.id };
+            const newApiTransaction = await api.addTransaction(apiTransactionData);
+            const enriched = {
+                ...newApiTransaction,
+                category: categories.find(c => c.id === newApiTransaction.categoryId)!,
+                wallet: wallets.find(w => w.id === newApiTransaction.walletId)!,
+            };
+            setTransactions(prev => [enriched, ...prev]);
+        } catch (error) {
+             console.error("Create transaction failed:", error);
+             throw error;
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const updateTransaction = async (transaction: Transaction) => {
+        setIsSubmitting(true);
+        try {
+            const { category, wallet, ...rest } = transaction;
+            const apiTransactionData = { ...rest, categoryId: category.id, walletId: wallet.id };
+            const updatedApiTransaction = await api.updateTransaction(apiTransactionData);
+            const enriched = {
+                ...updatedApiTransaction,
+                category: categories.find(c => c.id === updatedApiTransaction.categoryId)!,
+                wallet: wallets.find(w => w.id === updatedApiTransaction.walletId)!,
+            };
+            setTransactions(prev => prev.map(t => t.id === enriched.id ? enriched : t));
+        } catch(error) {
+            console.error("Update transaction failed:", error);
+            throw error;
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const deleteTransaction = deleteHandler(setTransactions, api.deleteTransaction);
+
+    const addInvoice = async (invoice: Omit<Invoice, 'id' | 'invoiceNumber'>) => {
+        if (!selectedCompanyId) throw new Error("No company selected");
+        setIsSubmitting(true);
+        try {
+            const newApiInvoice = await api.addInvoice(invoice, selectedCompanyId);
+            const enriched = {
+                ...newApiInvoice,
+                customer: contacts.find(c => c.id === newApiInvoice.customerId)!,
+            };
+            setInvoices(prev => [enriched, ...prev]);
+        } catch (error) {
+            console.error("Create invoice failed:", error);
+            throw error;
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    const updateInvoice = async (invoice: Invoice) => {
+        setIsSubmitting(true);
+        try {
+            const updatedApiInvoice = await api.updateInvoice(invoice);
+            const enriched = {
+                ...updatedApiInvoice,
+                customer: contacts.find(c => c.id === updatedApiInvoice.customerId)!,
+            };
+            setInvoices(prev => prev.map(i => i.id === enriched.id ? enriched : i));
+        } catch (error) {
+            console.error("Update invoice failed:", error);
+            throw error;
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
 
     // --- Business Logic Handlers ---
 
     const approveExpenseClaim = async (claimId: string) => {
         setIsSubmitting(true);
         try {
-            const { updatedClaim, newTransaction } = await api.approveExpenseClaim(claimId);
+            const { updatedClaim, newTransaction: newApiTransaction } = await api.approveExpenseClaim(claimId);
             setExpenseClaims(prev => prev.map(c => c.id === updatedClaim.id ? updatedClaim : c));
-            setTransactions(prev => [newTransaction, ...prev]);
+            const enriched = {
+                ...newApiTransaction,
+                category: categories.find(c => c.id === newApiTransaction.categoryId)!,
+                wallet: wallets.find(w => w.id === newApiTransaction.walletId)!,
+            };
+            setTransactions(prev => [enriched, ...prev]);
         } catch(error) {
             console.error("Failed to approve expense claim:", error);
             throw error;
@@ -170,9 +270,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const addContributionToGoal = async (goalId: string, amount: number, walletId: string) => {
         setIsSubmitting(true);
         try {
-            const { updatedGoal, newTransaction } = await api.addContributionToGoal(goalId, amount, walletId);
+            const { updatedGoal, newTransaction: newApiTransaction } = await api.addContributionToGoal(goalId, amount, walletId);
             setGoals(prev => prev.map(g => g.id === updatedGoal.id ? updatedGoal : g));
-            setTransactions(prev => [newTransaction, ...prev]);
+            const enriched = {
+                ...newApiTransaction,
+                category: categories.find(c => c.id === newApiTransaction.categoryId)!,
+                wallet: wallets.find(w => w.id === newApiTransaction.walletId)!,
+            };
+            setTransactions(prev => [enriched, ...prev]);
         } catch(error) {
             console.error("Failed to add contribution:", error);
             throw error;
@@ -204,9 +309,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         refetchData: () => { if(selectedCompanyId) fetchData(selectedCompanyId) },
         
         // Transaction CRUD
-        addTransaction: createHandler(setTransactions, api.addTransaction),
-        updateTransaction: updateHandler(setTransactions, api.updateTransaction),
-        deleteTransaction: deleteHandler(setTransactions, api.deleteTransaction),
+        addTransaction,
+        updateTransaction,
+        deleteTransaction,
 
         // Recurring Transaction CRUD
         addRecurringTransaction: createHandler(setRecurringTransactions, api.addRecurringTransaction),
@@ -224,8 +329,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         deleteContact: deleteHandler(setContacts, api.deleteContact),
 
         // Invoice CRUD
-        addInvoice: createHandler(setInvoices, api.addInvoice),
-        updateInvoice: updateHandler(setInvoices, api.updateInvoice),
+        addInvoice,
+        updateInvoice,
         deleteInvoice: deleteHandler(setInvoices, api.deleteInvoice),
 
         // Budget CRUD

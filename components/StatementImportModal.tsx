@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNotification } from '../contexts/NotificationContext.tsx';
+import { useModal } from '../hooks/useModal.ts';
 
 interface StatementImportModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface ParsedTransaction {
 }
 
 const StatementImportModal: React.FC<StatementImportModalProps> = ({ isOpen, onClose, onImportSuccess }) => {
+    const modalRef = useModal(isOpen, onClose);
     const [file, setFile] = useState<File | null>(null);
     const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([]);
     const [isParsing, setIsParsing] = useState(false);
@@ -78,9 +80,9 @@ const StatementImportModal: React.FC<StatementImportModalProps> = ({ isOpen, onC
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog" aria-labelledby="import-modal-title">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] flex flex-col">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Import Bank Statement</h2>
+                <h2 id="import-modal-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Import Bank Statement</h2>
                 <div className="space-y-4 flex-grow overflow-y-auto">
                     <div>
                         <label htmlFor="statement-file" className="block text-sm font-medium text-gray-700 dark:text-gray-300">

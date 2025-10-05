@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Account, AccountType } from '../types.ts';
+import { useModal } from '../hooks/useModal.ts';
 
 interface AccountModalProps {
     isOpen: boolean;
@@ -9,6 +10,7 @@ interface AccountModalProps {
 }
 
 const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose, onSave, account }) => {
+    const modalRef = useModal(isOpen, onClose);
     const [formData, setFormData] = useState({
         code: '',
         name: '',
@@ -44,9 +46,9 @@ const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose, onSave, ac
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog" aria-labelledby="account-modal-title">
             <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-gray-700">
-                <h2 className="text-2xl font-bold text-white mb-4">{account ? 'Edit' : 'Add'} Account</h2>
+                <h2 id="account-modal-title" className="text-2xl font-bold text-white mb-4">{account ? 'Edit' : 'Add'} Account</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>

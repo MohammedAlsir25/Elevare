@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { SortConfig } from '../types.ts';
 
-// FIX: Added 'as any' to handle nested keys like 'category.name' gracefully in the sort function.
 export const useSortableData = <T,>(items: T[], config: SortConfig | null = null) => {
     const [sortConfig, setSortConfig] = useState(config);
 

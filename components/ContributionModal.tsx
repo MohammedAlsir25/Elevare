@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FinancialGoal, Wallet } from '../types.ts';
 import { useData } from '../contexts/DataContext.tsx';
+import { useModal } from '../hooks/useModal.ts';
 
 interface ContributionModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface ContributionModalProps {
 
 const ContributionModal: React.FC<ContributionModalProps> = ({ isOpen, onClose, onSave, goal, wallets }) => {
     const { isSubmitting } = useData();
+    const modalRef = useModal(isOpen, onClose);
     const [amount, setAmount] = useState(0);
     const [walletId, setWalletId] = useState(wallets[0]?.id || '');
 
@@ -27,9 +29,9 @@ const ContributionModal: React.FC<ContributionModalProps> = ({ isOpen, onClose, 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" aria-modal="true" role="dialog" aria-labelledby="contribution-modal-title">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Add Contribution</h2>
+                <h2 id="contribution-modal-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Add Contribution</h2>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">to "{goal.name}"</p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>

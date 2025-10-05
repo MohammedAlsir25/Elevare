@@ -4,7 +4,7 @@ import * as api from '../services/api.ts';
 
 interface AuthContextType {
     user: User | null;
-    login: (email: string, pass: string, role: UserRole) => Promise<boolean>;
+    login: (email: string, pass: string) => Promise<boolean>;
     logout: () => void;
 }
 
@@ -13,16 +13,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
 
-    const login = async (email: string, pass: string, role: UserRole): Promise<boolean> => {
+    const login = async (email: string, pass: string): Promise<boolean> => {
        try {
-            // The role from the UI is for mock purposes; the backend determines the role from the DB.
-            const { token, user: loggedInUser } = await api.login(email, pass);
+            const { accessToken, refreshToken, user: loggedInUser } = await api.login(email, pass);
             
-            // In a real app, you would verify the token and get user details from it
-            // or a separate /profile endpoint. Here we trust the login response.
-            
-            // Store token for future API calls
-            localStorage.setItem('elevare-token', token);
+            // Store tokens for future API calls
+            localStorage.setItem('elevare-token', accessToken);
+            localStorage.setItem('elevare-refresh-token', refreshToken);
             
             setUser(loggedInUser);
             return true;
@@ -32,9 +29,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        const refreshToken = localStorage.getItem('elevare-refresh-token');
+        if (refreshToken) {
+            try {
+                await api.logout(refreshToken);
+            } catch (error) {
+                console.error("Logout API call failed, proceeding with client-side logout:", error);
+            }
+        }
         setUser(null);
         localStorage.removeItem('elevare-token');
+        localStorage.removeItem('elevare-refresh-token');
     };
 
     return (

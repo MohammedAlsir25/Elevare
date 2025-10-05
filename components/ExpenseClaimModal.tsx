@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ExpenseClaim, ExpenseClaimStatus, TransactionType, Employee } from '../types.ts';
 import { CATEGORIES } from '../constants.tsx';
+import { useModal } from '../hooks/useModal.ts';
 
 interface ExpenseClaimModalProps {
     isOpen: boolean;
@@ -11,6 +12,7 @@ interface ExpenseClaimModalProps {
 }
 
 const ExpenseClaimModal: React.FC<ExpenseClaimModalProps> = ({ isOpen, onClose, onSave, claim, employees }) => {
+    const modalRef = useModal(isOpen, onClose);
     const expenseCategories = Object.values(CATEGORIES).filter(c => c.type === TransactionType.EXPENSE);
     const today = new Date().toISOString().split('T')[0];
     
@@ -50,9 +52,9 @@ const ExpenseClaimModal: React.FC<ExpenseClaimModalProps> = ({ isOpen, onClose, 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog" aria-labelledby="claim-modal-title">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{claim ? 'Edit' : 'Submit'} Expense Claim</h2>
+                <h2 id="claim-modal-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{claim ? 'Edit' : 'Submit'} Expense Claim</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                      <div>
                         <label htmlFor="employeeId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Employee</label>

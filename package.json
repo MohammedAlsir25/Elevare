@@ -1,32 +1,48 @@
 {
-  "name": "elevare",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "name": "elevare-desktop",
+  "version": "1.0.0",
+  "description": "Desktop application for Elevare ERP",
+  "main": "electron.cjs",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "docker-compose up --build",
+    "electron:dev": "concurrently -k \"docker-compose up\" \"wait-on http://localhost:8080 && electron .\"",
+    "electron:build": "electron-builder"
   },
-  "dependencies": {
-    "react-dom": "^19.1.1",
-    "react": "^19.1.1",
-    "recharts": "^3.2.1",
-    "@google/genai": "^1.21.0",
-    "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.8.2",
-    "express": "^5.1.0",
-    "cors": "^2.8.5",
-    "pg": "^8.16.3",
-    "dotenv": "^17.2.3",
-    "jsonwebtoken": "^9.0.2",
-    "bcryptjs": "^3.0.2",
-    "uuid": "^13.0.0"
-  },
+  "author": "AI Assistant",
+  "license": "UNLICENSED",
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "concurrently": "^8.2.2",
+    "electron": "^29.1.5",
+    "electron-builder": "^24.13.3",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.elevare.desktop",
+    "productName": "Elevare",
+    "files": [
+      "electron.cjs",
+      "index.html",
+      "index.tsx",
+      "App.tsx",
+      "AuthenticatedApp.tsx",
+      "components/",
+      "constants.tsx",
+      "contexts/",
+      "hooks/",
+      "locales/",
+      "services/",
+      "types.ts",
+      "metadata.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "directories": {
+      "output": "dist"
+    }
   }
 }

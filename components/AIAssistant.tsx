@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage } from '../types.ts';
-import { sendMessageToAI } from '../services/geminiService.ts';
 import * as api from '../services/api.ts';
 import { useCompany } from '../contexts/CompanyContext.tsx';
 
@@ -31,19 +30,13 @@ const AIAssistant: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const contextualResponse = await api.processNaturalLanguageQuery(currentInput, selectedCompanyId);
+      const answer = await api.processNaturalLanguageQuery(currentInput);
 
-      let modelMessage: ChatMessage;
-
-      if (contextualResponse.handled) {
-        modelMessage = {
-            id: `model-${Date.now()}`,
-            role: 'model',
-            text: contextualResponse.answer!,
-        };
-      } else {
-        modelMessage = await sendMessageToAI(currentInput);
-      }
+      const modelMessage: ChatMessage = {
+          id: `model-${Date.now()}`,
+          role: 'model',
+          text: answer,
+      };
       setMessages(prev => [...prev, modelMessage]);
 
     } catch (error) {

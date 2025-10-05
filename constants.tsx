@@ -1,7 +1,6 @@
 import React from 'react';
 import { Transaction, Category, Wallet, TransactionType, Contact, CustomerStatus, Invoice, InvoiceStatus, Budget, BudgetPeriod, Employee, Account, AccountType, Product, JournalEntry, PurchaseOrder, PurchaseOrderStatus, TimesheetEntry, TimesheetStatus, ExpenseClaim, ExpenseClaimStatus, ContactType, FinancialGoal, RecurringTransaction, Frequency, AdminUser, UserRole, Company } from './types.ts';
 
-// FIX: Define a reusable props type for SVG icons to include className and style for better reusability and to fix type errors.
 type IconProps = { className?: string; style?: React.CSSProperties };
 
 // Icons
@@ -127,7 +126,6 @@ export const DocumentDownloadIcon: React.FC<IconProps> = ({ className }) => (
 
 
 // Mock Data
-// FIX: Add 'type' to categories to distinguish between income and expense types, fixing type errors in components that filter by category type.
 export const CATEGORIES: { [key: string]: Category } = {
   // Income
   sales: { id: 'cat-inc1', name: 'Sales Revenue', icon: ShoppingCartIcon, color: '#10b981', type: TransactionType.INCOME },
@@ -235,7 +233,6 @@ export const PRODUCTS: Product[] = [
     { id: 'prod1', sku: 'WD-001', name: 'Web Development Services', description: '10 hours of premium web development.', price: 1500, cost: 500, stock: 999, companyId: 'comp1' },
     { id: 'prod2', sku: 'GD-001', name: 'Graphic Design Package', description: 'Logo design and brand guidelines.', price: 800, cost: 250, stock: 999, companyId: 'comp1' },
     { id: 'prod3', sku: 'HW-KBD-01', name: 'Mechanical Keyboard', description: 'RGB Mechanical Keyboard with blue switches.', price: 120, cost: 75, stock: 85, companyId: 'comp2' },
-    // FIX: Add missing 'stock' property to conform to Product type definition.
     { id: 'prod4', sku: 'HW-MSE-01', name: 'Ergonomic Mouse', description: 'Wireless ergonomic mouse with 8 buttons.', price: 85, cost: 50, stock: 120, companyId: 'comp2' },
 ];
 

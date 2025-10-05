@@ -11,6 +11,109 @@ import { CardGridSkeleton } from './Skeletons.tsx';
 
 type Tab = 'budgets' | 'goals';
 
+const BudgetsContent: React.FC<{
+    budgets: Budget[];
+    transactions: any[];
+    categories: Category[];
+    permissions: ReturnType<typeof usePermissions>;
+    onEdit: (budget: Budget) => void;
+    onDelete: (id: string) => void;
+}> = ({ budgets, transactions, categories, permissions, onEdit, onDelete }) => {
+    const budgetDetails = useMemo(() => {
+        return budgets.map(budget => {
+            const category = categories.find(c => c.id === budget.categoryId);
+            if (!category) return null;
+            const budgetMonth = new Date(budget.startDate).getMonth();
+            const budgetYear = new Date(budget.startDate).getFullYear();
+            const spent = transactions.filter(t => t.category.id === budget.categoryId && t.type === TransactionType.EXPENSE && new Date(t.date).getMonth() === budgetMonth && new Date(t.date).getFullYear() === budgetYear).reduce((acc, t) => acc + Math.abs(t.amount), 0);
+            const remaining = budget.amount - spent;
+            const progress = Math.min((spent / budget.amount) * 100, 100);
+            let progressBarColor = 'bg-accent-green';
+            if (progress > 90) progressBarColor = 'bg-accent-red';
+            else if (progress > 70) progressBarColor = 'bg-accent-yellow';
+            return { ...budget, category, spent, remaining, progress, progressBarColor };
+        }).filter(Boolean) as (Budget & { category: Category; spent: number; remaining: number; progress: number; progressBarColor: string })[];
+    }, [budgets, transactions, categories]);
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {budgetDetails.map(budget => (
+                <div key={budget.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                    {/* Budget Card Content */}
+                    <div className="flex items-center justify-between mb-4">
+                         <div className="flex items-center">
+                            <div className="p-2 rounded-full mr-3" style={{ backgroundColor: budget.category.color + '33' }}><budget.category.icon className="h-6 w-6" style={{ color: budget.category.color }}/></div>
+                            <div>
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{budget.category.name}</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{budget.period} Budget</p>
+                            </div>
+                        </div>
+                        {permissions.canEditBudgets && (
+                            <div className="flex items-center space-x-2">
+                                <button onClick={() => onEdit(budget)} className="text-gray-500 dark:text-gray-400 hover:text-brand-primary p-1"><EditIcon className="h-5 w-5" /></button>
+                                <button onClick={() => onDelete(budget.id)} className="text-gray-500 dark:text-gray-400 hover:text-accent-red p-1"><DeleteIcon className="h-5 w-5" /></button>
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <div className="flex justify-between items-baseline mb-1">
+                            <span className="text-lg font-semibold text-gray-900 dark:text-white">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(budget.spent)}</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400"> of {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(budget.amount)}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5"><div className={`${budget.progressBarColor} h-2.5 rounded-full`} style={{ width: `${budget.progress}%` }}></div></div>
+                        <p className={`text-sm mt-2 text-right ${budget.remaining < 0 ? 'text-accent-red' : 'text-gray-500 dark:text-gray-400'}`}>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(budget.remaining)} {budget.remaining >= 0 ? 'left' : 'over'}</p>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const GoalsContent: React.FC<{
+    goals: FinancialGoal[];
+    permissions: ReturnType<typeof usePermissions>;
+    onEdit: (goal: FinancialGoal) => void;
+    onDelete: (id: string) => void;
+    onAddContribution: (goal: FinancialGoal) => void;
+}> = ({ goals, permissions, onEdit, onDelete, onAddContribution }) => {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {goals.map(goal => {
+                const progress = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
+                return (
+                    <div key={goal.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{goal.name}</h3>
+                                {permissions.canEditBudgets && (
+                                    <div className="flex items-center space-x-2">
+                                        <button onClick={() => onEdit(goal)} className="text-gray-500 dark:text-gray-400 hover:text-brand-primary p-1"><EditIcon className="h-5 w-5" /></button>
+                                        <button onClick={() => onDelete(goal.id)} className="text-gray-500 dark:text-gray-400 hover:text-accent-red p-1"><DeleteIcon className="h-5 w-5" /></button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex justify-between items-baseline mb-1">
+                                <span className="text-lg font-semibold text-gray-900 dark:text-white">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(goal.currentAmount)}</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400"> of {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(goal.targetAmount)}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                <div className="bg-brand-secondary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                            </div>
+                            <p className="text-sm mt-2 text-right text-gray-500 dark:text-gray-400">{progress.toFixed(1)}% complete</p>
+                        </div>
+                        {permissions.canEditBudgets && (
+                            <button onClick={() => onAddContribution(goal)} className="mt-6 w-full flex items-center justify-center gap-2 bg-brand-secondary/20 text-brand-secondary font-semibold py-2 px-4 rounded-md hover:bg-brand-secondary/30">
+                                <FlagIcon className="h-5 w-5" />
+                                Add Contribution
+                            </button>
+                        )}
+                    </div>
+                )
+            })}
+        </div>
+    );
+};
+
 const BudgetsPage: React.FC = () => {
     const { 
         loading, 
@@ -133,96 +236,6 @@ const BudgetsPage: React.FC = () => {
         </div>
     );
     
-    const BudgetsContent = () => {
-        const budgetDetails = useMemo(() => {
-            return budgets.map(budget => {
-                const category = categories.find(c => c.id === budget.categoryId);
-                if (!category) return null;
-                const budgetMonth = new Date(budget.startDate).getMonth();
-                const budgetYear = new Date(budget.startDate).getFullYear();
-                const spent = transactions.filter(t => t.category.id === budget.categoryId && t.type === TransactionType.EXPENSE && new Date(t.date).getMonth() === budgetMonth && new Date(t.date).getFullYear() === budgetYear).reduce((acc, t) => acc + Math.abs(t.amount), 0);
-                const remaining = budget.amount - spent;
-                const progress = Math.min((spent / budget.amount) * 100, 100);
-                let progressBarColor = 'bg-accent-green';
-                if (progress > 90) progressBarColor = 'bg-accent-red';
-                else if (progress > 70) progressBarColor = 'bg-accent-yellow';
-                return { ...budget, category, spent, remaining, progress, progressBarColor };
-            }).filter(Boolean) as (Budget & { category: Category; spent: number; remaining: number; progress: number; progressBarColor: string })[];
-        }, [budgets, transactions, categories]);
-
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {budgetDetails.map(budget => (
-                    <div key={budget.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-                        {/* Budget Card Content */}
-                        <div className="flex items-center justify-between mb-4">
-                             <div className="flex items-center">
-                                <div className="p-2 rounded-full mr-3" style={{ backgroundColor: budget.category.color + '33' }}><budget.category.icon className="h-6 w-6" style={{ color: budget.category.color }}/></div>
-                                <div>
-                                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{budget.category.name}</h3>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">{budget.period} Budget</p>
-                                </div>
-                            </div>
-                            {permissions.canEditBudgets && (
-                                <div className="flex items-center space-x-2">
-                                    <button onClick={() => { setEditingBudget(budget); setBudgetModalOpen(true); }} className="text-gray-500 dark:text-gray-400 hover:text-brand-primary p-1"><EditIcon className="h-5 w-5" /></button>
-                                    <button onClick={() => handleDeleteBudget(budget.id)} className="text-gray-500 dark:text-gray-400 hover:text-accent-red p-1"><DeleteIcon className="h-5 w-5" /></button>
-                                </div>
-                            )}
-                        </div>
-                        <div>
-                            <div className="flex justify-between items-baseline mb-1">
-                                <span className="text-lg font-semibold text-gray-900 dark:text-white">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(budget.spent)}</span>
-                                <span className="text-sm text-gray-500 dark:text-gray-400"> of {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(budget.amount)}</span>
-                            </div>
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5"><div className={`${budget.progressBarColor} h-2.5 rounded-full`} style={{ width: `${budget.progress}%` }}></div></div>
-                            <p className={`text-sm mt-2 text-right ${budget.remaining < 0 ? 'text-accent-red' : 'text-gray-500 dark:text-gray-400'}`}>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(budget.remaining)} {budget.remaining >= 0 ? 'left' : 'over'}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-    };
-
-    const GoalsContent = () => {
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {goals.map(goal => {
-                    const progress = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
-                    return (
-                        <div key={goal.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col justify-between">
-                            <div>
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{goal.name}</h3>
-                                    {permissions.canEditBudgets && (
-                                        <div className="flex items-center space-x-2">
-                                            <button onClick={() => { setEditingGoal(goal); setGoalModalOpen(true); }} className="text-gray-500 dark:text-gray-400 hover:text-brand-primary p-1"><EditIcon className="h-5 w-5" /></button>
-                                            <button onClick={() => handleDeleteGoal(goal.id)} className="text-gray-500 dark:text-gray-400 hover:text-accent-red p-1"><DeleteIcon className="h-5 w-5" /></button>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <span className="text-lg font-semibold text-gray-900 dark:text-white">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(goal.currentAmount)}</span>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400"> of {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(goal.targetAmount)}</span>
-                                </div>
-                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                                    <div className="bg-brand-secondary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
-                                </div>
-                                <p className="text-sm mt-2 text-right text-gray-500 dark:text-gray-400">{progress.toFixed(1)}% complete</p>
-                            </div>
-                            {permissions.canEditBudgets && (
-                                <button onClick={() => { setContributingToGoal(goal); setContributionModalOpen(true); }} className="mt-6 w-full flex items-center justify-center gap-2 bg-brand-secondary/20 text-brand-secondary font-semibold py-2 px-4 rounded-md hover:bg-brand-secondary/30">
-                                    <FlagIcon className="h-5 w-5" />
-                                    Add Contribution
-                                </button>
-                            )}
-                        </div>
-                    )
-                })}
-            </div>
-        );
-    };
-    
     if (loading) return <CardGridSkeleton />;
 
     return (
@@ -242,7 +255,23 @@ const BudgetsPage: React.FC = () => {
             {renderTabs()}
 
             <div className="mt-6">
-                {activeTab === 'budgets' ? <BudgetsContent /> : <GoalsContent />}
+                {activeTab === 'budgets' ? 
+                    <BudgetsContent 
+                        budgets={budgets}
+                        transactions={transactions}
+                        categories={categories}
+                        permissions={permissions}
+                        onEdit={(budget) => { setEditingBudget(budget); setBudgetModalOpen(true); }}
+                        onDelete={handleDeleteBudget}
+                    /> : 
+                    <GoalsContent 
+                        goals={goals}
+                        permissions={permissions}
+                        onEdit={(goal) => { setEditingGoal(goal); setGoalModalOpen(true); }}
+                        onDelete={handleDeleteGoal}
+                        onAddContribution={(goal) => { setContributingToGoal(goal); setContributionModalOpen(true); }}
+                    />
+                }
             </div>
 
             {isBudgetModalOpen && <BudgetModal isOpen={isBudgetModalOpen} onClose={() => setBudgetModalOpen(false)} onSave={handleSaveBudget} budget={editingBudget} />}

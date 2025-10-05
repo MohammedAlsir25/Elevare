@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TimesheetEntry, TimesheetStatus, Employee } from '../types.ts';
 import { useData } from '../contexts/DataContext.tsx';
+import { useModal } from '../hooks/useModal.ts';
 
 interface TimesheetModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface TimesheetModalProps {
 
 const TimesheetModal: React.FC<TimesheetModalProps> = ({ isOpen, onClose, onSave, entry, employees }) => {
     const { isSubmitting } = useData();
+    const modalRef = useModal(isOpen, onClose);
     const today = new Date().toISOString().split('T')[0];
     const [formData, setFormData] = useState({
         employeeId: '',
@@ -47,9 +49,9 @@ const TimesheetModal: React.FC<TimesheetModalProps> = ({ isOpen, onClose, onSave
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog" aria-labelledby="timesheet-modal-title">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{entry ? 'Edit' : 'Add'} Timesheet Entry</h2>
+                <h2 id="timesheet-modal-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{entry ? 'Edit' : 'Add'} Timesheet Entry</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="employeeId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Employee</label>
@@ -87,5 +89,4 @@ const TimesheetModal: React.FC<TimesheetModalProps> = ({ isOpen, onClose, onSave
     );
 };
 
-// FIX: Add default export to make the component importable.
 export default TimesheetModal;

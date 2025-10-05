@@ -1,6 +1,7 @@
 import React from 'react';
 import { Invoice } from '../types.ts';
 import { useSettings } from '../contexts/SettingsContext.tsx';
+import { useModal } from '../hooks/useModal.ts';
 
 interface InvoicePrintViewProps {
     invoice: Invoice;
@@ -9,6 +10,7 @@ interface InvoicePrintViewProps {
 
 const InvoicePrintView: React.FC<InvoicePrintViewProps> = ({ invoice, onClose }) => {
     const { settings } = useSettings();
+    const modalRef = useModal(true, onClose); // Hook is active as long as component is mounted
     const companySettings = settings.company;
 
     const handlePrint = () => {
@@ -46,7 +48,7 @@ const InvoicePrintView: React.FC<InvoicePrintViewProps> = ({ invoice, onClose })
 
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
+        <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
             <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-gray-700">
                 <div className="p-4 flex justify-between items-center border-b border-gray-700 flex-shrink-0">
                      <h2 className="text-xl font-bold text-white">Invoice Preview</h2>

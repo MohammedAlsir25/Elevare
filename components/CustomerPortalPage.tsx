@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Contact, Invoice, InvoiceStatus } from '../types.ts';
 import * as api from '../services/api.ts';
+import { useModal } from '../hooks/useModal.ts';
 
 interface CustomerPortalPageProps {
     customer: Contact;
@@ -19,6 +20,7 @@ const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ customer, onClo
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const modalRef = useModal(true, onClose);
 
     useEffect(() => {
         const fetchInvoices = async () => {
@@ -37,10 +39,10 @@ const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ customer, onClo
     }, [customer.id]);
 
     return (
-        <div className="fixed inset-0 bg-gray-100 dark:bg-gray-900 z-50 flex flex-col" aria-modal="true" role="dialog">
+        <div ref={modalRef} className="fixed inset-0 bg-gray-100 dark:bg-gray-900 z-50 flex flex-col" aria-modal="true" role="dialog" aria-labelledby="portal-title">
             <header className="bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Customer Portal</h1>
+                    <h1 id="portal-title" className="text-2xl font-bold text-gray-900 dark:text-white">Customer Portal</h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Welcome, {customer.name}</p>
                 </div>
                 <button onClick={onClose} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 font-semibold">
